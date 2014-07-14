@@ -38,7 +38,14 @@ function run() {
 
 	function getTouch(e) {
 		if (e.touches && e.touches.length > 0) {
-			return { x: e.touches[0].pageX, y: e.touches[0].pageY };
+
+			var averagePoint = { x: 0, y: 0, length: e.touches.length };
+			for (var n in e.touches) {
+				var touch = e.touches[n]
+				averagePoint.x += touch.pageX / averagePoint.length;
+				averagePoint.y += touch.pageY / averagePoint.length;
+			}
+			return averagePoint;
 		}
 		var ret = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop };
 		if (retina) {
@@ -52,18 +59,25 @@ function run() {
 
 	var touchBegin = function(e) {
 		var touch = getTouch(e);
-		shape.graphics.beginFill(color).drawCircle(touch.x, touch.y, thickness / 2);
+		if (touch.length == 1) {
+			shape.graphics.beginFill(color).drawCircle(touch.x - shape.x, touch.y - shape.y, thickness / 2);
+		}
 		prevTouch = touch
 	};
 
 	var touchMove = function(e) {
 		if (prevTouch) {
 			var touch = getTouch(e);
-			shape.graphics
-				.setStrokeStyle(thickness,1)
-				.beginStroke(color)
-				.moveTo(prevTouch.x, prevTouch.y)
-				.lineTo(touch.x, touch.y).endStroke()
+			if (touch.length > 1) {
+				shape.x += touch.x - prevTouch.x;
+				shape.y += touch.y - prevTouch.y;
+			} else {
+				shape.graphics
+					.setStrokeStyle(thickness,1)
+					.beginStroke(color)
+					.moveTo(prevTouch.x - shape.x, prevTouch.y - shape.y)
+					.lineTo(touch.x - shape.x, touch.y - shape.y).endStroke()
+			}
 			prevTouch = touch;
 		}
 	};
