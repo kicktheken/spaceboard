@@ -215,6 +215,14 @@ Easel.prototype.stopInertiaScroll = function() {
 	this.scrollevents = [];
 };
 
+Easel.prototype.setEraser = function(x,y,radius) {
+	this.eraser = { x: x, y: y, radius: radius };
+};
+
+Easel.prototype.unsetEraser = function() {
+	this.eraser = null;
+};
+
 Easel.prototype.update = function() {
 	this.stage.clear();
 
@@ -240,6 +248,10 @@ Easel.prototype.update = function() {
 				this.y + row * this.stage.height
 			);
 		}
+	}
+
+	if (this.eraser) {
+		this.stage.drawCircle('rgba(255,200,200,.8)', this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 }
 
