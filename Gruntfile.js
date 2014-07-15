@@ -1,22 +1,21 @@
 module.exports = function(grunt) {
-	// Project configuration.
 	grunt.initConfig({
-		pkg: grunt.file.readJSON('package.json'),
-		uglify: {
-		options: {
-			banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
-		},
-		build: {
-			src: 'client/*.js',
-			dest: 'ios/app/index.js'
-		}
+		requirejs: {
+			compile: {
+				options: {
+					baseUrl: "client",
+					mainConfigFile: "client/main.js",
+					include: "main",
+					insertRequire: ['main'],
+					name: "lib/almond",
+					out: "ios/app/index.js",
+					wrap: true
+				}
+			}
 		}
 	});
 
-	// Load the plugin that provides the "uglify" task.
-	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-requirejs');
 
-	// Default task(s).
-	grunt.registerTask('default', ['uglify']);	
+	grunt.registerTask('default', ['requirejs']);
 };
-
