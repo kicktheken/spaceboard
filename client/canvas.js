@@ -21,35 +21,33 @@ function Canvas(width, height, stage) {
 	return this;
 }
 
-Canvas.prototype = {
-	drawCircle: function(color, x, y, radius) {
-		var context = this.canvas.getContext('2d');
-		context.beginPath();
-		context.arc(x, y, radius, 0, 2 * Math.PI, false);
-		context.fillStyle = color;
-		context.fill();
-		return this;
-	},
+Canvas.prototype.drawCircle = function(color, x, y, radius) {
+	var context = this.canvas.getContext('2d');
+	context.beginPath();
+	context.arc(x, y, radius, 0, 2 * Math.PI, false);
+	context.fillStyle = color;
+	context.fill();
+	return this;
+};
 
-	drawLine: function(color, x1, y1, x2, y2, thickness) {
-		var context = this.canvas.getContext('2d');
-		context.lineWidth = thickness;
-		context.lineCap = 'round';
-		context.strokeStyle = color;
-		context.beginPath();
-		context.moveTo(x1, y1);
-		context.lineTo(x2, y2);
-		context.stroke();
-		return this;
-	},
+Canvas.prototype.drawLine = function(color, x1, y1, x2, y2, thickness) {
+	var context = this.canvas.getContext('2d');
+	context.lineWidth = thickness;
+	context.lineCap = 'round';
+	context.strokeStyle = color;
+	context.beginPath();
+	context.moveTo(x1, y1);
+	context.lineTo(x2, y2);
+	context.stroke();
+	return this;
+};
 
-	drawCanvas: function(canvas, x, y) {
-		var context = this.canvas.getContext('2d');
-		context.drawImage(canvas.canvas, x, y);
-		return this;
-	},
+Canvas.prototype.drawCanvas = function(canvas, x, y) {
+	var context = this.canvas.getContext('2d');
+	context.drawImage(canvas.canvas, x, y);
+	return this;
+};
 
-	clear: function() {
-		this.canvas.width = this.canvas.width;
-	}
+Canvas.prototype.clear = function() {
+	this.canvas.width = this.canvas.width;
 }
