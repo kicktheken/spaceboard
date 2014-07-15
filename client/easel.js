@@ -42,9 +42,46 @@ Easel.prototype.translateCoords = function(x,y) {
 	return { x:x, y:y, col:col, row:row };
 };
 
+Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
+	offsetCol = offsetCol || 0;
+	offsetRow = offsetRow || 0;
+	this.initCell(coords.col + offsetCol, coords.row + offsetRow)
+		.drawCircle(color,
+			coords.x - (offsetCol * this.stage.width),
+			coords.y - (offsetRow * this.stage.height),
+			thickness / 2
+		);
+	return this;
+};
+
 Easel.prototype.startDraw = function(x,y) {
 	var coords = this.translateCoords(x,y);
-	this.initCell(coords.col, coords.row).drawCircle(color, coords.x, coords.y, thickness / 2);
+
+	if (coords.x < thickness / 2) {
+		if (coords.y < thickness / 2) {
+			this._startDraw(coords, 0, -1);
+			this._startDraw(coords, -1, -1);
+		} else if (coords.y > this.stage.height - thickness / 2) {
+			this._startDraw(coords, 0, 1);
+			this._startDraw(coords, -1, 1);
+		}
+		this._startDraw(coords, -1, 0);
+	} else if (coords.x > this.stage.width - thickness / 2) {
+		if (coords.y < thickness / 2) {
+			this._startDraw(coords, 0, -1);
+			this._startDraw(coords, 1, -1);
+		} else if (coords.y > this.stage.height - thickness / 2) {
+			this._startDraw(coords, 0, 1);
+			this._startDraw(coords, 1, 1);
+		}
+		this._startDraw(coords, 1, 0);
+	} else if (coords.y < thickness / 2) {
+		this._startDraw(coords, 0, -1);
+	} else if (coords.y > this.stage.height - thickness / 2) {
+		this._startDraw(coords, 0, 1);
+	}
+
+	this._startDraw(coords);
 };
 
 Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
