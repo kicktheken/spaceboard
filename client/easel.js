@@ -223,6 +223,27 @@ Easel.prototype.unsetEraser = function() {
 	this.eraser = null;
 };
 
+Easel.prototype._erase = function(coords, radius, offsetCol, offsetRow) {
+	offsetCol = offsetCol || 0;
+	offsetRow = offsetRow || 0;
+	this.initCell(
+		coords.col + offsetCol, coords.row + offsetRow
+	).clearCircle(
+		coords.x - (offsetCol * this.stage.width),
+		coords.y - (offsetRow * this.stage.height),
+		radius
+	);
+};
+
+Easel.prototype.erase = function(x, y, radius) {
+	var coords = this.translateCoords(x,y);
+	var neighbors = this.getZoneNeighbors(coords, radius);
+	for (var i=0; i < neighbors.length; i++) {
+		this._erase(coords, radius, neighbors[i][0], neighbors[i][1]);
+	}
+	this._erase(coords, radius);
+};
+
 Easel.prototype.update = function() {
 	this.stage.clear();
 
@@ -239,6 +260,11 @@ Easel.prototype.update = function() {
 	var minrow = Math.floor(yratio);
 	var numrows = yratio == minrow ? 1 : 2;
 
+	if (this.eraser) {
+		this.erase(this.eraser.x, this.eraser.y, this.eraser.radius);
+		this.stage.drawCircle('rgb(255,200,200)', this.eraser.x, this.eraser.y, this.eraser.radius);
+	}
+
 
 	for (var row = minrow; row < minrow + numrows; row++) {
 		for (var col = mincol; col < mincol + numcols; col++) {
@@ -248,10 +274,6 @@ Easel.prototype.update = function() {
 				this.y + row * this.stage.height
 			);
 		}
-	}
-
-	if (this.eraser) {
-		this.stage.drawCircle('rgba(255,200,200,.8)', this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 }
 

@@ -30,7 +30,7 @@ var prevTouch;
 function setEraser(touch) {
 	var maxRadius = 0;
 	for (var n in touch.touches) {
-		var p = touch.touches[n]
+		var p = touch.touches[n];
 		var dx = p.x - touch.x;
 		var dy = p.y - touch.y;
 		var radius = Math.sqrt(dx * dx + dy * dy);
@@ -38,7 +38,7 @@ function setEraser(touch) {
 			maxRadius = radius;
 		}
 	}
-	stage.setEraser(touch.x, touch.y, maxRadius + 20);
+	stage.setEraser(touch.x, touch.y, maxRadius / 2 + 30);
 }
 
 var touchBegin = function(e) {
