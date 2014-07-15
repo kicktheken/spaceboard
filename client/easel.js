@@ -4,7 +4,7 @@ var color = 'yellow';
 var thickness = 10;
 
 function Easel(width, height) {
-	var stage = this.stage = new Canvas(width, height, true);
+	this.stage = new Canvas(width, height, true);
 	this.grid = {};
 	this.initCell(0,0);
 	this.x = 0;

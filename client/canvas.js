@@ -56,6 +56,7 @@ Canvas.prototype.clear = function() {
 Canvas.prototype.clearCircle = function(x, y, radius) {
 	var context = this.canvas.getContext('2d');
 	context.save();
+	context.fillStyle = 'white';
     context.globalCompositeOperation = 'destination-out';
     context.beginPath();
     context.arc(x, y, radius, 0, 2 * Math.PI, false);
