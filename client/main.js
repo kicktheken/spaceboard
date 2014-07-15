@@ -24,6 +24,7 @@ function getTouch(e) {
 var prevTouch;
 
 var touchBegin = function(e) {
+	stage.stopInertiaScroll();
 	var touch = getTouch(e);
 	if (touch.length == 1) {
 		stage.startDraw(touch.x, touch.y);
@@ -46,6 +47,7 @@ var touchMove = function(e) {
 };
 
 var touchEnd = function(e) {
+	stage.startInertiaScroll();
 	prevTouch = null;
 };
 

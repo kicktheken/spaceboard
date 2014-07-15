@@ -2,7 +2,6 @@ define(['canvas'],function() {
 
 var color = 'yellow';
 var thickness = 10;
-var deceleration = 4;
 
 function Easel(width, height) {
 	var stage = this.stage = new Canvas(width, height, true);
@@ -14,8 +13,7 @@ function Easel(width, height) {
 	this.dx = 0;
 	this.dy = 0;
 
-	this.vx = 0;
-	this.vy = 0;
+	this.scrollevents = [];
 	this.bounds = {
 		minx: 0, miny: 0, maxx: 0, maxy: 0
 	};
@@ -195,19 +193,35 @@ Easel.prototype.translate = function(dx, dy) {
 };
 
 Easel.prototype.startInertiaScroll = function() {
-	this.vx = this.dx;
-	this.vy = this.dy;
+	this.scrollevents = [];
+
+	var velocity = Math.sqrt(this.dx * this.dx, this.dy * this.dy);
+	var decr = 1 / velocity / 2;
+	
+	function fade(t) {
+		t--;
+		return t*t;
+	}
+	for (var t = 0; t <= 1; t += decr) {
+		var m = fade(t);
+		this.scrollevents.push([m * this.dx, m * this.dy]);
+	}
+
 	this.dx = 0;
 	this.dy = 0;
 };
 
 Easel.prototype.stopInertiaScroll = function() {
-	this.vx = 0;
-	this.vy = 0;
+	this.scrollevents = [];
 };
 
 Easel.prototype.update = function() {
 	this.stage.clear();
+
+	if (this.scrollevents.length > 0) {
+		var se = this.scrollevents.shift();
+		this.translate(se[0],se[1]);
+	}
 
 	var xratio = -this.x / this.stage.width;
 	var mincol = Math.floor(xratio);
