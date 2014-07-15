@@ -41,5 +41,15 @@ Canvas.prototype = {
 		context.lineTo(x2, y2);
 		context.stroke();
 		return this;
+	},
+
+	drawCanvas: function(canvas, x, y) {
+		var context = this.canvas.getContext('2d');
+		context.drawImage(canvas.canvas, x, y);
+		return this;
+	},
+
+	clear: function() {
+		this.canvas.width = this.canvas.width;
 	}
 }
