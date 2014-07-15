@@ -2,6 +2,7 @@ define(['canvas'],function() {
 
 var color = 'yellow';
 var thickness = 10;
+var deceleration = 4;
 
 function Easel(width, height) {
 	var stage = this.stage = new Canvas(width, height, true);
@@ -9,6 +10,15 @@ function Easel(width, height) {
 	this.initCell(0,0);
 	this.x = 0;
 	this.y = 0;
+
+	this.dx = 0;
+	this.dy = 0;
+
+	this.vx = 0;
+	this.vy = 0;
+	this.bounds = {
+		minx: 0, miny: 0, maxx: 0, maxy: 0
+	};
 }
 
 Easel.prototype.initCell = function(col, row) {
@@ -29,6 +39,22 @@ Easel.prototype.initCells = function(startcol, startrow, cols, rows) {
 	}
 };
 
+Easel.prototype.updateBounds = function(x,y) {
+	x -= this.stage.width / 2;
+	y -= this.stage.height / 2;
+
+	if (x < this.bounds.minx) {
+		this.bounds.minx = x;
+	} else if (x > this.bounds.maxx) {
+		this.bounds.maxx = x;
+	}
+	if (y < this.bounds.miny) {
+		this.bounds.miny = y;
+	} else if (y > this.bounds.maxy) {
+		this.bounds.maxy = y;
+	}
+};
+
 Easel.prototype.translateCoords = function(x,y) {
 	x -= this.x;
 	y -= this.y;
@@ -36,6 +62,7 @@ Easel.prototype.translateCoords = function(x,y) {
 	var col = Math.floor(x / this.stage.width);
 	var row = Math.floor(y / this.stage.height);
 
+	this.updateBounds(x,y);
 	x -= col * this.stage.width;
 	y -= row * this.stage.height;
 
@@ -140,8 +167,21 @@ Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
 };
 
 Easel.prototype.translate = function(dx, dy) {
+	this.dx = dx;
+	this.dy = dy;
 	this.x += dx;
 	this.y += dy;
+
+	if (-this.x > this.bounds.maxx + this.stage.width / 2) {
+		this.x = -(this.bounds.maxx + this.stage.width / 2);
+	} else if (-this.x < this.bounds.minx - this.stage.width / 2) {
+		this.x = this.stage.width / 2 - this.bounds.minx;
+	}
+	if (-this.y > this.bounds.maxy + this.stage.height / 2) {
+		this.y = -(this.bounds.maxy + this.stage.height / 2);
+	} else if (-this.y < this.bounds.miny - this.stage.height / 2) {
+		this.y = this.stage.height / 2 - this.bounds.miny;
+	}
 
 	var xratio = -this.x / this.stage.width;
 	var mincol = Math.floor(xratio);
@@ -152,6 +192,18 @@ Easel.prototype.translate = function(dx, dy) {
 	var numrows = yratio == minrow ? 1 : 2;
 
 	this.initCells(mincol, minrow, numcols, numrows);
+};
+
+Easel.prototype.startInertiaScroll = function() {
+	this.vx = this.dx;
+	this.vy = this.dy;
+	this.dx = 0;
+	this.dy = 0;
+};
+
+Easel.prototype.stopInertiaScroll = function() {
+	this.vx = 0;
+	this.vy = 0;
 };
 
 Easel.prototype.update = function() {
