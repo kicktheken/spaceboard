@@ -26,6 +26,7 @@ function getTouch(e) {
 }
 
 var prevTouch;
+var touchRespond;
 
 function setEraser(touch) {
 	var maxRadius = 0;
@@ -44,34 +45,51 @@ function setEraser(touch) {
 var touchBegin = function(e) {
 	stage.stopInertiaScroll();
 	var touch = getTouch(e);
-	if (touch.length == 1) {
-		stage.startDraw(touch.x, touch.y);
-	} else if (touch.length > 2) {
-		setEraser(touch);
-	}
+	touchRespond = function() {
+		if (touch.length == 1) {
+			stage.startDraw(touch.x, touch.y);
+		} else if (touch.length > 2) {
+			setEraser(touch);
+		}
+	};
 	prevTouch = touch
 };
 
 var touchMove = function(e) {
-	if (prevTouch) {
-		var touch = getTouch(e);
-		if (touch.length > 2) {
-			setEraser(touch);
-		} else if (touch.length == 2) {
-			var dx = touch.x - prevTouch.x;
-			var dy = touch.y - prevTouch.y;
-			stage.translate(dx,dy);
-		} else {
-			stage.lineDraw(prevTouch.x, prevTouch.y, touch.x, touch.y);
+	var touch = getTouch(e);
+	touchRespond = function() {
+		if (prevTouch) {
+			if (touch.length > 2) {
+				setEraser(touch);
+			} else if (touch.length == 2) {
+				var dx = touch.x - prevTouch.x;
+				var dy = touch.y - prevTouch.y;
+				stage.translate(dx,dy);
+			} else {
+				stage.lineDraw(prevTouch.x, prevTouch.y, touch.x, touch.y);
+			}
+			prevTouch = touch
 		}
-		prevTouch = touch;
 	}
 };
 
 var touchEnd = function(e) {
-	stage.unsetEraser();
-	stage.startInertiaScroll();
+	
 	prevTouch = null;
+	touchRespond = function() {
+		stage.unsetEraser();
+		stage.startInertiaScroll();
+	}
+};
+
+
+function makeCallback(f) {
+	return function(e) {
+		touchRespond = function() {
+			f(e);
+			touchRespond = null;
+		};
+	};
 };
 
 document.addEventListener('mousedown', touchBegin);
@@ -84,6 +102,10 @@ document.addEventListener('touchend', touchEnd);
 
 (function animloop(){
 	requestAnimationFrame(animloop);
+	if (touchRespond) {
+		touchRespond();
+		touchRespond = null;
+	}
 	stage.update();
 })();
 
