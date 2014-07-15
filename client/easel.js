@@ -42,6 +42,36 @@ Easel.prototype.translateCoords = function(x,y) {
 	return { x:x, y:y, col:col, row:row };
 };
 
+Easel.prototype.getZoneNeighbors = function(coords, threshold) {
+	var ret = [];
+
+	if (coords.x < threshold) {
+		if (coords.y < threshold) {
+			ret.push([0,-1]);
+			ret.push([-1,-1]);
+		} else if (coords.y > this.stage.height - threshold) {
+			ret.push([0,1]);
+			ret.push([-1,1]);
+		}
+		ret.push([-1,0]);
+	} else if (coords.x > this.stage.width - threshold) {
+		if (coords.y < threshold) {
+			ret.push([0,-1]);
+			ret.push([1,-1]);
+		} else if (coords.y > this.stage.height - threshold) {
+			ret.push([0,1]);
+			ret.push([1,1]);
+		}
+		ret.push([1,0]);
+	} else if (coords.y < threshold) {
+		ret.push([0,-1]);
+	} else if (coords.y > this.stage.height - threshold) {
+		ret.push([0,1]);
+	}
+
+	return ret;
+};
+
 Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
 	offsetCol = offsetCol || 0;
 	offsetRow = offsetRow || 0;
@@ -59,28 +89,9 @@ Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
 Easel.prototype.startDraw = function(x,y) {
 	var coords = this.translateCoords(x,y);
 
-	if (coords.x < thickness / 2) {
-		if (coords.y < thickness / 2) {
-			this._startDraw(coords, 0, -1);
-			this._startDraw(coords, -1, -1);
-		} else if (coords.y > this.stage.height - thickness / 2) {
-			this._startDraw(coords, 0, 1);
-			this._startDraw(coords, -1, 1);
-		}
-		this._startDraw(coords, -1, 0);
-	} else if (coords.x > this.stage.width - thickness / 2) {
-		if (coords.y < thickness / 2) {
-			this._startDraw(coords, 0, -1);
-			this._startDraw(coords, 1, -1);
-		} else if (coords.y > this.stage.height - thickness / 2) {
-			this._startDraw(coords, 0, 1);
-			this._startDraw(coords, 1, 1);
-		}
-		this._startDraw(coords, 1, 0);
-	} else if (coords.y < thickness / 2) {
-		this._startDraw(coords, 0, -1);
-	} else if (coords.y > this.stage.height - thickness / 2) {
-		this._startDraw(coords, 0, 1);
+	var neighbors = this.getZoneNeighbors(coords, thickness / 2);
+	for (var i=0; i < neighbors.length; i++) {
+		this._startDraw(coords, neighbors[i][0], neighbors[i][1]);
 	}
 
 	this._startDraw(coords);
@@ -104,8 +115,28 @@ Easel.prototype._lineDraw = function(coords1, coords2, offsetCol, offsetRow) {
 Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
 	var coords1 = this.translateCoords(x1,y1);
 	var coords2 = this.translateCoords(x2,y2);
+
+	// this method may have multiple draw calls for the same area
+	// but it should be performant enough that that doesn't matter
+	var neighbors = this.getZoneNeighbors(coords1, thickness / 2);
+	for (var i=0; i < neighbors.length; i++) {
+		this._lineDraw(coords1, coords2, neighbors[i][0], neighbors[i][1]);
+	}
 	this._lineDraw(coords1, coords2);
+
+
+	neighbors = this.getZoneNeighbors(coords2, thickness / 2);
+	for (var i=0; i < neighbors.length; i++) {
+		this._lineDraw(coords2, coords1, neighbors[i][0], neighbors[i][1]);
+	}
 	this._lineDraw(coords2, coords1);
+
+	var colDiff = coords2.col - coords1.col;
+	var rowDiff = coords2.row - coords1.row;
+	if (Math.abs(colDiff) == 1 && Math.abs(rowDiff) == 1) {
+		this._lineDraw(coords1, coords2, colDiff, 0);
+		this._lineDraw(coords1, coords2, 0, rowDiff);
+	}
 };
 
 Easel.prototype.translate = function(dx, dy) {
