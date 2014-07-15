@@ -46,9 +46,7 @@ var touchBegin = function(e) {
 	stage.stopInertiaScroll();
 	var touch = getTouch(e);
 	touchRespond = function() {
-		if (touch.length == 1) {
-			stage.startDraw(touch.x, touch.y);
-		} else if (touch.length > 2) {
+		if (touch.length > 2) {
 			setEraser(touch);
 		}
 	};
@@ -70,16 +68,23 @@ var touchMove = function(e) {
 			}
 			prevTouch = touch
 		}
-	}
+	};
 };
 
 var touchEnd = function(e) {
-	
-	prevTouch = null;
-	touchRespond = function() {
-		stage.unsetEraser();
-		stage.startInertiaScroll();
+	if (prevTouch && prevTouch.length == 1) {
+		var touch = prevTouch;
+		touchRespond = function() {
+			stage.startDraw(touch.x, touch.y);
+		};
+	} else {
+		touchRespond = function() {
+			stage.unsetEraser();
+			stage.startInertiaScroll();
+		};
 	}
+	prevTouch = null;
+	
 };
 
 
