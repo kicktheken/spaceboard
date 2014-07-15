@@ -7,8 +7,8 @@ var retina = false;
 
 function Canvas(width, height, stage) {
 	var canvas = this.canvas = stage ? document.getElementById('canvas') : document.createElement('canvas');
-	canvas.width = width;
-	canvas.height = height;
+	this.width = canvas.width = width;
+	this.height = canvas.height = height;
 	if (retina) {
 		canvas.style.width = canvas.width + 'px';
 		canvas.style.height = canvas.height + 'px';

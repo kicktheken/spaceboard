@@ -13,7 +13,7 @@ function getTouch(e) {
 		}
 		return averagePoint;
 	}
-	var ret = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop };
+	var ret = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop, length: 1 };
 	if (retina) {
 		ret.x *= 2;
 		ret.y *= 2;
