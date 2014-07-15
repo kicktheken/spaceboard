@@ -45,12 +45,14 @@ Easel.prototype.translateCoords = function(x,y) {
 Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
 	offsetCol = offsetCol || 0;
 	offsetRow = offsetRow || 0;
-	this.initCell(coords.col + offsetCol, coords.row + offsetRow)
-		.drawCircle(color,
-			coords.x - (offsetCol * this.stage.width),
-			coords.y - (offsetRow * this.stage.height),
-			thickness / 2
-		);
+	this.initCell(
+		coords.col + offsetCol, coords.row + offsetRow
+	).drawCircle(
+		color,
+		coords.x - (offsetCol * this.stage.width),
+		coords.y - (offsetRow * this.stage.height),
+		thickness / 2
+	);
 	return this;
 };
 
@@ -84,13 +86,26 @@ Easel.prototype.startDraw = function(x,y) {
 	this._startDraw(coords);
 };
 
+Easel.prototype._lineDraw = function(coords1, coords2, offsetCol, offsetRow) {
+	offsetCol = offsetCol || 0;
+	offsetRow = offsetRow || 0;
+	this.initCell(
+		coords1.col + offsetCol, coords1.row + offsetRow
+	).drawLine(
+		color,
+		coords1.x - (offsetCol * this.stage.width),
+		coords1.y - (offsetRow * this.stage.height),
+		coords2.x - ((offsetCol + coords1.col - coords2.col) * this.stage.width),
+		coords2.y - ((offsetRow  + coords1.row - coords2.row) * this.stage.height),
+		thickness
+	);
+};
+
 Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
 	var coords1 = this.translateCoords(x1,y1);
 	var coords2 = this.translateCoords(x2,y2);
-	this.initCell(coords1.col,coords1.row)
-		.drawLine(color, coords1.x, coords1.y, coords2.x, coords2.y, thickness);
-	this.initCell(coords2.col,coords2.row)
-		.drawLine(color, coords1.x, coords1.y, coords2.x, coords2.y, thickness);
+	this._lineDraw(coords1, coords2);
+	this._lineDraw(coords2, coords1);
 };
 
 Easel.prototype.translate = function(dx, dy) {
