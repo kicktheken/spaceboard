@@ -1,5 +1,6 @@
 ios/App/*
 node_modules
+deploy.sh
 
 # Ignore files build by xcode
 *.mode*v*

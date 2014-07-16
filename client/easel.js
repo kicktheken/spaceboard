@@ -4,7 +4,7 @@ var color = 'yellow';
 var thickness = 10;
 var maxZoom = 1;
 var minZoom = .25;
-var bPooling = true;
+var bPooling = false;
 
 function Easel(width, height) {
 	this.stage = new Canvas(width, height, true);

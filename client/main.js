@@ -7,8 +7,8 @@ function getTouch(e) {
 
 		var touches = [];
 		var averagePoint = { x: 0, y: 0, length: e.touches.length };
-		for (var n in e.touches) {
-			var touch = e.touches[n]
+		for (var i=0; i < e.touches.length; i++) {
+			var touch = e.touches[i]
 			touch = { x: touch.pageX, y: touch.pageY };
 			touches.push(touch);
 			averagePoint.x += touch.x / averagePoint.length;
@@ -57,6 +57,7 @@ function getDistance(touch) {
 }
 
 var touchBegin = function(e) {
+	e.preventDefault();
 	stage.stopInertiaScroll();
 	var touch = getTouch(e);
 	touchRespond = function() {
@@ -68,6 +69,7 @@ var touchBegin = function(e) {
 };
 
 var touchMove = function(e) {
+	e.preventDefault();
 	var touch = getTouch(e);
 	touchRespond = function() {
 		if (prevTouch) {
@@ -87,6 +89,7 @@ var touchMove = function(e) {
 };
 
 var touchEnd = function(e) {
+	e.preventDefault();
 	if (prevTouch && prevTouch.length == 1) {
 		var touch = prevTouch;
 		touchRespond = function() {
