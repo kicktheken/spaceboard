@@ -4,12 +4,12 @@ var color = 'yellow';
 var thickness = 10;
 var maxZoom = 1;
 var minZoom = .25;
+var bPooling = true;
 
 function Easel(width, height) {
 	this.stage = new Canvas(width, height, true);
 	this.grid = {};
 	this.active = [];
-	this.pool = [];
 	this.initCell(0,0);
 	this.x = 0;
 	this.y = 0;
@@ -29,20 +29,20 @@ Easel.prototype.initCell = function(col, row) {
 	if (!this.grid[row]) {
 		this.grid[row] = {};
 	}
-	if (!this.grid[row][col]) {
-		var cell;
-		if (this.pool.length > 0) {
-			cell = this.pool.shift();
-			cell.clear();
-		} else {
-			cell = new Canvas(this.stage.width, this.stage.height);
+	var cell = this.grid[row][col];
+	if (cell) {
+		if (cell.init()) {
+			this.active.push(cell);
 		}
+	} else {
+		cell = new Canvas(this.stage.width, this.stage.height);
 		this.grid[row][col] = cell;
 		cell.col = col;
 		cell.row = row;
 		this.active.push(cell);
 	}
-	return this.grid[row][col];
+	
+	return cell;
 };
 
 Easel.prototype.initCells = function(startcol, startrow, cols, rows) {
@@ -335,16 +335,17 @@ Easel.prototype.update = function() {
 		this.stage.drawCircle('rgb(255,200,200)', this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 
-	for (var i = this.active.length - 1; i >= 0; i--) {
-		var cell = this.active[i];
-		if (cell.tick != this.ticks) {
-			this.active.splice(i,1);
-			this.pool.push(cell);
-			this.grid[cell.row][cell.col] = null;
+	if (bPooling) {
+		for (var i = this.active.length - 1; i >= 0; i--) {
+			var cell = this.active[i];
+			if (cell.tick != this.ticks) {
+				this.active.splice(i,1);
+				cell.release();
+			}
 		}
 	}
 }
 
-return Easel
+return Easel;
 
 });

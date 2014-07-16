@@ -7,11 +7,12 @@ Number.prototype.rInt = function(n) {
 	return Math.floor(Math.random() * this) + (n || 0);
 };
 
+var pool = [];
 var retina = false;
 var debug = true;
 
 function Canvas(width, height, stage) {
-	var canvas = this.canvas = stage ? document.getElementById('canvas') : document.createElement('canvas');
+	var canvas = this.canvas = stage ? document.getElementById('canvas') : this.initCanvas();
 	this.width = canvas.width = width;
 	this.height = canvas.height = height;
 	if (retina) {
@@ -31,6 +32,41 @@ function Canvas(width, height, stage) {
 	}
 	return this;
 }
+
+Canvas.prototype.init = function() {
+	if (!this.canvas) {
+		if (this.data) {
+			var canvas = this.canvas = this.initCanvas();
+			var img = new Image();
+			var _this = this;
+			img.onload = function() {
+				canvas.getContext('2d').drawImage(this,0,0);
+			};
+			img.src = this.data;
+			this.data = null;
+			return true;
+		} else {
+			throw new Error("cannot reinitialize canvas without data url");
+		}
+	}
+};
+
+Canvas.prototype.initCanvas = function() {
+	if (pool.length > 0) {
+		return pool.shift();
+	}
+	var canvas = document.createElement('canvas');
+	canvas.retinaResolutionEnabled = retina;
+	return canvas;
+};
+
+Canvas.prototype.release = function() {
+	var canvas = this.canvas;
+	this.data = retina || canvas.retinaResolutionEnabled ? canvas.toDataURLHD() : canvas.toDataURL();
+	pool.push(canvas);
+	canvas.width = canvas.width;
+	this.canvas = null;
+};
 
 Canvas.prototype.drawCircle = function(color, x, y, radius) {
 	var context = this.canvas.getContext('2d');
