@@ -285,6 +285,8 @@ Easel.prototype._erase = function(coords, radius, offsetCol, offsetRow) {
 };
 
 Easel.prototype.erase = function(x, y, radius) {
+	radius /= this.scale;
+
 	var coords = this.translateCoords(x,y);
 	var neighbors = this.getZoneNeighbors(coords, radius);
 	for (var i=0; i < neighbors.length; i++) {
