@@ -189,26 +189,29 @@ Easel.prototype.translate = function(dx, dy) {
 	this.x += dx;
 	this.y += dy;
 
-	if (-this.x > this.bounds.maxx + this.stage.width / 2) {
-		this.x = -(this.bounds.maxx + this.stage.width / 2);
-	} else if (-this.x < this.bounds.minx - this.stage.width / 2) {
-		this.x = this.stage.width / 2 - this.bounds.minx;
+	var offsetx = this.stage.width * (1 - this.scale) / 2;
+	var offsety = this.stage.height * (1 - this.scale) / 2;
+	var zoneWidth = this.stage.width * this.scale;
+	var zoneHeight = this.stage.height * this.scale;
+
+	if (-this.x > this.bounds.maxx + zoneWidth / 2 - offsetx) {
+		this.x = -(this.bounds.maxx + zoneWidth / 2 - offsetx);
+	} else if (-this.x < this.bounds.minx - zoneWidth / 2 - offsetx) {
+		this.x = zoneWidth / 2 - this.bounds.minx + offsetx;
 	}
-	if (-this.y > this.bounds.maxy + this.stage.height / 2) {
-		this.y = -(this.bounds.maxy + this.stage.height / 2);
-	} else if (-this.y < this.bounds.miny - this.stage.height / 2) {
-		this.y = this.stage.height / 2 - this.bounds.miny;
+	if (-this.y > this.bounds.maxy + zoneHeight / 2 - offsety) {
+		this.y = -(this.bounds.maxy + zoneHeight / 2 - offsety);
+	} else if (-this.y < this.bounds.miny - zoneHeight / 2) {
+		this.y = zoneHeight / 2 - this.bounds.miny + offsety;
 	}
 
 	var zoneWidth = this.stage.width * this.scale;
 	var zoneHeight = this.stage.height * this.scale;
 
-	var xratio = -this.x / zoneWidth;
-	var mincol = Math.floor(xratio);
+	var mincol = Math.floor(-this.x / zoneWidth);
 	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
 
-	var yratio = -this.y / zoneHeight;
-	var minrow = Math.floor(yratio);
+	var minrow = Math.floor(-this.y / zoneHeight);
 	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
 	this.initCells(mincol, minrow, numcols, numrows);
@@ -301,12 +304,10 @@ Easel.prototype.update = function() {
 	var zoneWidth = this.stage.width * this.scale;
 	var zoneHeight = this.stage.height * this.scale;
 
-	var xratio = -this.x / zoneWidth;
-	var mincol = Math.floor(xratio);
+	var mincol = Math.floor(-this.x / zoneWidth);
 	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
 
-	var yratio = -this.y / zoneHeight;
-	var minrow = Math.floor(yratio);
+	var minrow = Math.floor(-this.y / zoneHeight);
 	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
 	if (this.eraser) {

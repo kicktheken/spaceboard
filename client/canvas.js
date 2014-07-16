@@ -65,7 +65,7 @@ Canvas.prototype.drawCanvas = function(canvas, x, y, width, height) {
 
 Canvas.prototype.clear = function(color) {
 	this.canvas.width = this.canvas.width;
-	if (color && debug) {
+	if (typeof color === 'string' || debug) {
 		var context = this.canvas.getContext('2d');
 		context.fillStyle = color || this.color;
 		context.fillRect(0,0,this.width,this.height);
