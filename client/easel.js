@@ -3,7 +3,7 @@ define(['canvas'],function() {
 var color = 'yellow';
 var thickness = 10;
 var maxZoom = 1;
-var minZoom = .25;
+var minZoom = .2;
 var bPooling = false;
 
 function Easel(width, height) {
@@ -21,7 +21,10 @@ function Easel(width, height) {
 
 	this.scrollevents = [];
 	this.bounds = {
-		minx: 0, miny: 0, maxx: 0, maxy: 0
+		minx: -(1 / minZoom / 2 + 1) * width,
+		miny: -(1 / minZoom / 2 + 1) * height,
+		maxx: (1 / minZoom / 2 + 1) * width,
+		maxy: (1 / minZoom / 2 + 1) * height
 	};
 }
 
@@ -76,7 +79,7 @@ Easel.prototype.translateCoords = function(x,y) {
 	var col = Math.floor(x / this.stage.width);
 	var row = Math.floor(y / this.stage.height);
 
-	this.updateBounds(x,y);
+	//this.updateBounds(x,y);
 	x -= col * this.stage.width;
 	y -= row * this.stage.height;
 
@@ -189,20 +192,15 @@ Easel.prototype.translate = function(dx, dy) {
 	this.x += dx;
 	this.y += dy;
 
-	var offsetx = this.stage.width * (1 - this.scale) / 2;
-	var offsety = this.stage.height * (1 - this.scale) / 2;
-	var zoneWidth = this.stage.width * this.scale;
-	var zoneHeight = this.stage.height * this.scale;
-
-	if (-this.x > this.bounds.maxx + zoneWidth / 2 - offsetx) {
-		this.x = -(this.bounds.maxx + zoneWidth / 2 - offsetx);
-	} else if (-this.x < this.bounds.minx - zoneWidth / 2 - offsetx) {
-		this.x = zoneWidth / 2 - this.bounds.minx + offsetx;
+	if (-this.x < (this.bounds.minx + this.stage.width / 2) * this.scale ) {
+		this.x = -(this.bounds.minx + this.stage.width / 2) * this.scale;
+	} else if (-this.x > this.bounds.maxx * this.scale - this.stage.width * (1 - this.scale / 2)) {
+		this.x = -(this.bounds.maxx * this.scale - this.stage.width * (1 - this.scale / 2));
 	}
-	if (-this.y > this.bounds.maxy + zoneHeight / 2 - offsety) {
-		this.y = -(this.bounds.maxy + zoneHeight / 2 - offsety);
-	} else if (-this.y < this.bounds.miny - zoneHeight / 2) {
-		this.y = zoneHeight / 2 - this.bounds.miny + offsety;
+	if (-this.y < (this.bounds.miny + this.stage.height / 2) * this.scale) {
+		this.y = -(this.bounds.miny + this.stage.height / 2) * this.scale;
+	} else if (-this.y > this.bounds.maxy * this.scale - this.stage.height * (1 - this.scale / 2)) {
+		this.y = -(this.bounds.maxy * this.scale - this.stage.height * (1 - this.scale / 2));
 	}
 
 	var zoneWidth = this.stage.width * this.scale;

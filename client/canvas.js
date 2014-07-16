@@ -7,6 +7,10 @@ Number.prototype.rInt = function(n) {
 	return Math.floor(Math.random() * this) + (n || 0);
 };
 
+Number.prototype.floor = function() {
+	return Math.floor(this);
+};
+
 var pool = [];
 var retina = false;
 var debug = true;
