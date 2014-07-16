@@ -121,6 +121,24 @@ document.addEventListener('touchstart', touchBegin);
 document.addEventListener('touchmove', touchMove);
 document.addEventListener('touchend', touchEnd);
 
+if (/Mac OS/i.test(navigator.userAgent)) { // trackpad scrolling is win
+	var ffVersion = navigator.userAgent.match(/Firefox\/\d+/i);
+	if (ffVersion) {
+		ffVersion = ffVersion[0].substring(ffVersion[0].indexOf('/')+1);
+		if (ffVersion > 16) { // deltaX only works on FF 17.0+
+			initMouseScroll();
+			window.addWheelListener(document, function(e) {
+				stage.translate(e.deltaX, e.deltaY);
+			});
+		}
+	} else if (/webkit/i.test(navigator.userAgent)) {
+		initMouseScroll();
+		window.addWheelListener(document, function(e) {
+			stage.translate(e.deltaX * 20, e.deltaY * 20);
+		});
+	}
+}
+
 (function animloop(){
 	requestAnimationFrame(animloop);
 	if (touchRespond) {
@@ -130,5 +148,75 @@ document.addEventListener('touchend', touchEnd);
 	stage.update();
 })();
 
+function initMouseScroll() {
+    var prefix = "", _addEventListener, onwheel, support;
+
+    // detect event model
+    if ( window.addEventListener ) {
+        _addEventListener = "addEventListener";
+    } else {
+        _addEventListener = "attachEvent";
+        prefix = "on";
+    }
+
+    // detect available wheel event
+    if ( document.onmousewheel !== undefined ) {
+        // Webkit and IE support at least "mousewheel"
+        support = "mousewheel"
+    }
+    try {
+        // Modern browsers support "wheel"
+        WheelEvent("wheel");
+        support = "wheel";
+    } catch (e) {}
+    if ( !support ) {
+        // let's assume that remaining browsers are older Firefox
+        support = "DOMMouseScroll";
+    }
+
+    window.addWheelListener = function( elem, callback, useCapture ) {
+        _addWheelListener( elem, support, callback, useCapture );
+
+        // handle MozMousePixelScroll in older Firefox
+        if( support == "DOMMouseScroll" ) {
+            _addWheelListener( elem, "MozMousePixelScroll", callback, useCapture );
+        }
+    };
+
+    function _addWheelListener( elem, eventName, callback, useCapture ) {
+        elem[ _addEventListener ]( prefix + eventName, support == "wheel" ? callback : function( originalEvent ) {
+            !originalEvent && ( originalEvent = window.event );
+
+            // create a normalized event object
+            var event = {
+                // keep a ref to the original event object
+                originalEvent: originalEvent,
+                target: originalEvent.target || originalEvent.srcElement,
+                type: "wheel",
+                deltaMode: originalEvent.type == "MozMousePixelScroll" ? 0 : 1,
+                deltaX: 0,
+                delatZ: 0,
+                preventDefault: function() {
+                    originalEvent.preventDefault ?
+                        originalEvent.preventDefault() :
+                        originalEvent.returnValue = false;
+                }
+            };
+
+            // calculate deltaY (and deltaX) according to the event
+            if ( support == "mousewheel" ) {
+                event.deltaY = - 1/40 * originalEvent.wheelDelta;
+                // Webkit also support wheelDeltaX
+                originalEvent.wheelDeltaX && ( event.deltaX = - 1/40 * originalEvent.wheelDeltaX );
+            } else {
+                event.deltaY = originalEvent.detail;
+            }
+
+            // it's time to fire the callback
+            return callback( event );
+
+        }, useCapture || false );
+    }
+};
 
 });
