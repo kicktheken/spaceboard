@@ -12,6 +12,7 @@ function Easel(width, height) {
 
 	this.dx = 0;
 	this.dy = 0;
+	this.scale = 1;
 
 	this.scrollevents = [];
 	this.bounds = {
@@ -181,15 +182,42 @@ Easel.prototype.translate = function(dx, dy) {
 		this.y = this.stage.height / 2 - this.bounds.miny;
 	}
 
-	var xratio = -this.x / this.stage.width;
-	var mincol = Math.floor(xratio);
-	var numcols = xratio == mincol ? 1 : 2;
+	var zoneWidth = this.stage.width * this.scale;
+	var zoneHeight = this.stage.height * this.scale;
 
-	var yratio = -this.y / this.stage.height;
+	var xratio = -this.x / zoneWidth;
+	var mincol = Math.floor(xratio);
+	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
+
+	var yratio = -this.y / zoneHeight;
 	var minrow = Math.floor(yratio);
-	var numrows = yratio == minrow ? 1 : 2;
+	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
 	this.initCells(mincol, minrow, numcols, numrows);
+};
+
+Easel.prototype.zoom = function(dist, x, y) {
+	if (!this.dist) {
+		this.dist = dist;
+		return;
+	}
+	var newscale = this.scale * dist/this.dist;
+
+	if (newscale > 1) {
+		newscale = 1;
+	} else if (newscale < .2) {
+		newscale = .2;
+	}
+
+	var scale = (newscale - this.scale) / newscale;
+	this.x -= scale * (x - this.x);
+	this.y -= scale * (y - this.y);
+	this.scale = newscale;
+	this.dist = dist;
+};
+
+Easel.prototype.stopZoom = function() {
+	this.dist = null;
 };
 
 Easel.prototype.startInertiaScroll = function() {
@@ -251,29 +279,36 @@ Easel.prototype.update = function() {
 		var se = this.scrollevents.shift();
 		this.translate(se[0],se[1]);
 	}
+	var zoneWidth = this.stage.width * this.scale;
+	var zoneHeight = this.stage.height * this.scale;
 
-	var xratio = -this.x / this.stage.width;
+	var xratio = -this.x / zoneWidth;
 	var mincol = Math.floor(xratio);
-	var numcols = xratio == mincol ? 1 : 2;
+	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
 
-	var yratio = -this.y / this.stage.height;
+	var yratio = -this.y / zoneHeight;
 	var minrow = Math.floor(yratio);
-	var numrows = yratio == minrow ? 1 : 2;
+	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
 	if (this.eraser) {
 		this.erase(this.eraser.x, this.eraser.y, this.eraser.radius);
-		this.stage.drawCircle('rgb(255,200,200)', this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 
-
+	
 	for (var row = minrow; row < minrow + numrows; row++) {
 		for (var col = mincol; col < mincol + numcols; col++) {
 			this.stage.drawCanvas(
-				this.grid[row][col],
-				this.x + col * this.stage.width,
-				this.y + row * this.stage.height
+				this.initCell(col,row),
+				this.x + col * zoneWidth,
+				this.y + row * zoneHeight,
+				zoneWidth,
+				zoneHeight
 			);
 		}
+	}
+
+	if (this.eraser) {
+		this.stage.drawCircle('rgb(255,200,200)', this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 }
 

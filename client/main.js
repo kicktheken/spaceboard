@@ -42,6 +42,20 @@ function setEraser(touch) {
 	stage.setEraser(touch.x, touch.y, maxRadius / 2 + 30);
 }
 
+function getDistance(touch) {
+	if (touch.length <= 1) {
+		return 0;
+	}
+	var dist = 0;
+	var prev = touch.touches[0];
+	for (var i=1; i<touch.length; i++) {
+		var cur = touch.touches[i];
+		var dx = cur.x - prev.x, dy = cur.y - prev.y;
+		dist += Math.sqrt(dx * dx + dy * dy);
+	}
+	return dist;
+}
+
 var touchBegin = function(e) {
 	stage.stopInertiaScroll();
 	var touch = getTouch(e);
@@ -60,6 +74,7 @@ var touchMove = function(e) {
 			if (touch.length > 2) {
 				setEraser(touch);
 			} else if (touch.length == 2) {
+				stage.zoom(getDistance(touch), touch.x, touch.y);
 				var dx = touch.x - prevTouch.x;
 				var dy = touch.y - prevTouch.y;
 				stage.translate(dx,dy);
@@ -79,6 +94,7 @@ var touchEnd = function(e) {
 		};
 	} else {
 		touchRespond = function() {
+			stage.stopZoom();
 			stage.unsetEraser();
 			stage.startInertiaScroll();
 		};
