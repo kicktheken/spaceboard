@@ -70,8 +70,8 @@ Easel.prototype.updateBounds = function(x,y) {
 };
 
 Easel.prototype.translateCoords = function(x,y) {
-	x -= this.x;
-	y -= this.y;
+	x = (x - this.x) / this.scale;
+	y = (y - this.y) / this.scale;
 
 	var col = Math.floor(x / this.stage.width);
 	var row = Math.floor(y / this.stage.height);
@@ -86,27 +86,30 @@ Easel.prototype.translateCoords = function(x,y) {
 Easel.prototype.getZoneNeighbors = function(coords, threshold) {
 	var ret = [];
 
+	var zoneWidth = this.stage.width * this.scale;
+	var zoneHeight = this.stage.height * this.scale;
+
 	if (coords.x < threshold) {
 		if (coords.y < threshold) {
 			ret.push([0,-1]);
 			ret.push([-1,-1]);
-		} else if (coords.y > this.stage.height - threshold) {
+		} else if (coords.y > zoneHeight - threshold) {
 			ret.push([0,1]);
 			ret.push([-1,1]);
 		}
 		ret.push([-1,0]);
-	} else if (coords.x > this.stage.width - threshold) {
+	} else if (coords.x > zoneWidth - threshold) {
 		if (coords.y < threshold) {
 			ret.push([0,-1]);
 			ret.push([1,-1]);
-		} else if (coords.y > this.stage.height - threshold) {
+		} else if (coords.y > zoneHeight - threshold) {
 			ret.push([0,1]);
 			ret.push([1,1]);
 		}
 		ret.push([1,0]);
 	} else if (coords.y < threshold) {
 		ret.push([0,-1]);
-	} else if (coords.y > this.stage.height - threshold) {
+	} else if (coords.y > zoneHeight - threshold) {
 		ret.push([0,1]);
 	}
 
