@@ -2,10 +2,14 @@ define(['canvas'],function() {
 
 var color = 'yellow';
 var thickness = 10;
+var maxZoom = 1;
+var minZoom = .25;
 
 function Easel(width, height) {
 	this.stage = new Canvas(width, height, true);
 	this.grid = {};
+	this.active = [];
+	this.pool = [];
 	this.initCell(0,0);
 	this.x = 0;
 	this.y = 0;
@@ -13,6 +17,7 @@ function Easel(width, height) {
 	this.dx = 0;
 	this.dy = 0;
 	this.scale = 1;
+	this.ticks = 0;
 
 	this.scrollevents = [];
 	this.bounds = {
@@ -25,7 +30,17 @@ Easel.prototype.initCell = function(col, row) {
 		this.grid[row] = {};
 	}
 	if (!this.grid[row][col]) {
-		this.grid[row][col] = new Canvas(this.stage.width, this.stage.height);
+		var cell;
+		if (this.pool.length > 0) {
+			cell = this.pool.shift();
+			cell.clear();
+		} else {
+			cell = new Canvas(this.stage.width, this.stage.height);
+		}
+		this.grid[row][col] = cell;
+		cell.col = col;
+		cell.row = row;
+		this.active.push(cell);
 	}
 	return this.grid[row][col];
 };
@@ -203,10 +218,10 @@ Easel.prototype.zoom = function(dist, x, y) {
 	}
 	var newscale = this.scale * dist/this.dist;
 
-	if (newscale > 1) {
-		newscale = 1;
-	} else if (newscale < .2) {
-		newscale = .2;
+	if (newscale > maxZoom) {
+		newscale = maxZoom;
+	} else if (newscale < minZoom) {
+		newscale = minZoom;
 	}
 
 	var scale = (newscale - this.scale) / newscale;
@@ -273,6 +288,7 @@ Easel.prototype.erase = function(x, y, radius) {
 };
 
 Easel.prototype.update = function() {
+	++this.ticks;
 	this.stage.clear();
 
 	if (this.scrollevents.length > 0) {
@@ -297,18 +313,29 @@ Easel.prototype.update = function() {
 	
 	for (var row = minrow; row < minrow + numrows; row++) {
 		for (var col = mincol; col < mincol + numcols; col++) {
+			var cell = this.initCell(col,row);
 			this.stage.drawCanvas(
-				this.initCell(col,row),
+				cell,
 				this.x + col * zoneWidth,
 				this.y + row * zoneHeight,
 				zoneWidth,
 				zoneHeight
 			);
+			cell.tick = this.ticks;
 		}
 	}
 
 	if (this.eraser) {
 		this.stage.drawCircle('rgb(255,200,200)', this.eraser.x, this.eraser.y, this.eraser.radius);
+	}
+
+	for (var i = this.active.length - 1; i >= 0; i--) {
+		var cell = this.active[i];
+		if (cell.tick != this.ticks) {
+			this.active.splice(i,1);
+			this.pool.push(cell);
+			this.grid[cell.row][cell.col] = null;
+		}
 	}
 }
 

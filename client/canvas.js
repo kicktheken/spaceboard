@@ -64,7 +64,13 @@ Canvas.prototype.drawCanvas = function(canvas, x, y, width, height) {
 };
 
 Canvas.prototype.clear = function() {
-	this.canvas.width = this.canvas.width;
+	if (debug) {
+		var context = this.canvas.getContext('2d');
+		context.fillStyle = this.color;
+		context.fillRect(0,0,this.width,this.height);
+	} else {
+		this.canvas.width = this.canvas.width;
+	}
 	return this;
 };
 
