@@ -142,7 +142,7 @@ Easel.prototype.getZoneNeighbors = function(coords, threshold) {
 	return ret;
 };
 
-Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
+Easel.prototype._dotDraw = function(coords, offsetCol, offsetRow) {
 	offsetCol = offsetCol || 0;
 	offsetRow = offsetRow || 0;
 	this.initCell(
@@ -156,7 +156,7 @@ Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
 	return this;
 };
 
-Easel.prototype.startDraw = function(x,y) {
+Easel.prototype.dotDraw = function(x,y) {
 	var coords = this.translateCoords(x,y);
 
 	var neighbors = this.getZoneNeighbors(coords, THICKNESS / 2);
@@ -165,16 +165,6 @@ Easel.prototype.startDraw = function(x,y) {
 	}
 
 	this._startDraw(coords);
-
-	if (this.datastore) {
-		var data = this.grid[coords.row][coords.col].release();
-		var key = coords.col + '_' + coords.row;
-		this.replaceRecord(datastore.getTable('cells'), key, {
-			col: coords.col,
-			row: coords.row,
-			data: data
-		});
-	}
 };
 
 Easel.prototype._lineDraw = function(coords1, coords2, offsetCol, offsetRow) {
@@ -396,6 +386,25 @@ Easel.prototype.replaceRecord = function(table, id, values) {
 	});
 };
 
+Easel.prototype.flushDirty = function() {
+	var _this = this;
+	Canvas.flushAll(function(cell) {
+		var data = cell.toData();
+			if (data) {
+				var key = cell.col + '_' + cell.row;
+				if (_this.datastore) {
+					_this.replaceRecord(_this.datastore.getTable('cells'), key, {
+						col: cell.col,
+						row: cell.row,
+						data: data
+					});
+				} else {
+					localStorage.setItem(key, data);
+				}
+			}
+	});
+};
+
 Easel.prototype.save = function() {
 	if (!this.datastore) {
 		for (var i = 0; i < this.active.length; i++) {
@@ -498,7 +507,7 @@ Easel.prototype.load = function(done) {
 				var cell = cellTable.get(col + '_' + row);
 				if (cell) {
 					numCellsWithData++;
-					_this.initCell(col, row, cell.get('data'), check);
+					_this.initCell(col, row, cell.get('data'));
 				}
 			}
 		}

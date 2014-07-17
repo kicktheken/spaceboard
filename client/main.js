@@ -19,12 +19,7 @@ function getTouch(e) {
 		averagePoint.touches = touches;
 		return averagePoint;
 	}
-	var ret = { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop, length: 1 };
-	if (retina) {
-		ret.x *= 2;
-		ret.y *= 2;
-	}
-	return ret;
+	return { x: e.pageX - canvas.offsetLeft, y: e.pageY - canvas.offsetTop, length: 1 };
 }
 
 function setEraser(touch) {
@@ -135,10 +130,11 @@ function run() {
 	var touchEnd = function(e) {
 		e.preventDefault();
 		if (prevTouch && prevTouch.length == 1) {
+			stage.flushDirty();
 			if (!hasMoved) {
-			var touch = prevTouch;
+				var touch = prevTouch;
 				touchRespond = function() {
-					stage.startDraw(touch.x, touch.y);
+					stage.dotDraw(touch.x, touch.y);
 				};
 			}
 		} else {

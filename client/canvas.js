@@ -17,6 +17,7 @@ var pool = [];
 var retina = false;
 var debug = true;
 var resolutionScale = 1;
+var dirty = {};
 
 function Canvas(width, height, data) {
 	this.width = width;
@@ -48,6 +49,14 @@ function Canvas(width, height, data) {
 	
 	return this;
 }
+
+Canvas.flushAll = function(callback) {
+	Object.keys(dirty).forEach(function(key) {
+		callback(dirty[key]);
+		dirty[key].dirty = false;
+	});
+	dirty = {};
+};
 
 Canvas.prototype.init = function() {
 	if (!this.canvas) {
@@ -119,19 +128,28 @@ Canvas.prototype.release = function() {
 			throw new Error("cannot release a released canvas");
 		}
 	}
-
-	if (this.points.length > 0) {
-		this.data = '';
-		this.data += this.points[0].join(',');
-		for (var i = 1; i < this.points.length; i++) {
-			this.data += '_' + this.points[i].join(',');
-		}
-	}
+	this.data = this.toData();
 	pool.push(canvas);
 	canvas.height = 1;
 	//canvas.width = canvas.width;
 	this.canvas = null;
 	return this.data;
+};
+
+Canvas.prototype.toData = function() {
+	if (this.points.length > 0) {
+		var data = '';
+		data += this.points[0].join(',');
+		for (var i = 1; i < this.points.length; i++) {
+			data += '_' + this.points[i].join(',');
+		}
+		return data;
+	}
+};
+
+Canvas.prototype.dirtyThis = function() {
+	dirty[this.col + '_'+ this.row] = this;
+	this.dirty = true;
 };
 
 Canvas.prototype.drawCircle = function(color, x, y, radius) {
@@ -144,6 +162,7 @@ Canvas.prototype.drawCircle = function(color, x, y, radius) {
 	context.fillStyle = color;
 	context.fill();
 	this.points.push([x,y]);
+	this.dirtyThis();
 	return this;
 };
 
@@ -176,6 +195,7 @@ Canvas.prototype.drawLine = function(color, x1, y1, x2, y2, thickness) {
 	} else {
 		this.points.push([x1, y1, x2, y2]);
 	}
+	this.dirtyThis();
 	return this;
 };
 
