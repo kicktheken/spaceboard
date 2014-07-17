@@ -6,7 +6,7 @@ var maxZoom = 1;
 var minZoom = .2;
 var bPooling = false;
 
-function Easel(width, height, callback) {
+function Easel(width, height, client) {
 	this.stage = new Canvas(width, height, true);
 	this.grid = {};
 	this.active = [];
@@ -26,6 +26,8 @@ function Easel(width, height, callback) {
 		maxx: (1 / minZoom / 2 + extend) * width,
 		maxy: (1 / minZoom / 2 + extend) * height
 	};
+
+	this.datastoreManager = client.getDatastoreManager();
 }
 
 Easel.prototype.initCell = function(col, row, data, callback) {
@@ -186,6 +188,19 @@ Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
 	}
 };
 
+Easel.prototype.getViewport = function() {
+	var zoneWidth = this.stage.width * this.scale;
+	var zoneHeight = this.stage.height * this.scale;
+
+	var mincol = Math.floor(-this.x / zoneWidth);
+	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
+
+	var minrow = Math.floor(-this.y / zoneHeight);
+	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
+
+	return { mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
+};
+
 Easel.prototype.translate = function(dx, dy) {
 	this.dx = dx;
 	this.dy = dy;
@@ -203,16 +218,8 @@ Easel.prototype.translate = function(dx, dy) {
 		this.y = -(this.bounds.maxy * this.scale - this.stage.height * (1 - this.scale / 2));
 	}
 
-	var zoneWidth = this.stage.width * this.scale;
-	var zoneHeight = this.stage.height * this.scale;
-
-	var mincol = Math.floor(-this.x / zoneWidth);
-	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
-
-	var minrow = Math.floor(-this.y / zoneHeight);
-	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
-
-	this.initCells(mincol, minrow, numcols, numrows);
+	var v = this.getViewport();
+	this.initCells(v.mincol, v.minrow, v.cols, v.rows);
 };
 
 Easel.prototype.zoom = function(dist, x, y) {
@@ -301,22 +308,17 @@ Easel.prototype.update = function() {
 		var se = this.scrollevents.shift();
 		this.translate(se[0],se[1]);
 	}
-	var zoneWidth = this.stage.width * this.scale;
-	var zoneHeight = this.stage.height * this.scale;
-
-	var mincol = Math.floor(-this.x / zoneWidth);
-	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
-
-	var minrow = Math.floor(-this.y / zoneHeight);
-	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
 	if (this.eraser) {
 		this.erase(this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 
+	var zoneWidth = this.stage.width * this.scale;
+	var zoneHeight = this.stage.height * this.scale;
+	var v = this.getViewport();
 	
-	for (var row = minrow; row < minrow + numrows; row++) {
-		for (var col = mincol; col < mincol + numcols; col++) {
+	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
+		for (var col = v.mincol; col < v.mincol + v.cols; col++) {
 			var cell = this.initCell(col,row);
 			this.stage.drawCanvas(
 				cell,
@@ -344,49 +346,64 @@ Easel.prototype.update = function() {
 	}
 };
 
-Easel.prototype.save = function() {
-	for (var i = 0; i < this.active.length; i++) {
-		var canvas = this.active[i];
-		var key = canvas.col + '_' + canvas.row;
-		localStorage.setItem(key, canvas.release());
-	}
-	localStorage.setItem('x', this.x);
-	localStorage.setItem('y', this.y);
-	localStorage.setItem('scale', this.scale);
+Easel.prototype.replaceRecord = function(table, id, values) {
+	var record = table.getOrInsert(id, values);
+	Object.keys(values).forEach(function(key) {
+		record.set(key, values[key]);
+	});
+};
 
+Easel.prototype.save = function() {
+	var cellTable = this.datastore.getTable('cells');
+	for (var i = 0; i < this.active.length; i++) {
+		var cell = this.active[i];
+		this.replaceRecord(cellTable, cell.col + '_' + cell.row, {
+			col: cell.col,
+			row: cell.row,
+			data: cell.release()
+		});
+	}
+
+	var easelTable = this.datastore.getTable('easel');
+	this.replaceRecord(easelTable, 'this',{
+		x: this.x,
+		y: this.y,
+		scale: this.scale
+	});
 };
 
 Easel.prototype.load = function(done) {
-	var cells = [];
 	var _this = this;
-	Object.keys(localStorage).forEach(function(key){
-		var s = key.split('_');
-		if (s.length == 2) {
-			cells.push({
-				col: parseInt(s[0]),
-				row: parseInt(s[1]),
-				data: localStorage.getItem(key)
-			});
-		} else {
-			_this[key] = parseFloat(localStorage.getItem(key));
+	this.datastoreManager.openOrCreateDatastore('hackweek',function (error, datastore) {
+		if (error) {
+			throw new Error('Error opening default datastore: ' + error);
 		}
+		var easelTable = datastore.getTable('easel');
+		var record = easelTable.get('this');
+		_this.x = record.get('x');
+		_this.y = record.get('y');
+		_this.scale = record.get('scale');
+		_this.datastore = datastore;
+
+		var cellTable = datastore.getTable('cells');
+		var v = _this.getViewport();
+		var numDone = 0;
+
+		var check = function() {
+			numDone++;
+			if (numDone == v.cols * v.rows) {
+				done(numDone);
+			}
+		};
+
+		for (var row = v.minrow; row < v.minrow + v.rows; row++) {
+			for (var col = v.mincol; col < v.mincol + v.cols; col++) {
+				var cell = cellTable.get(col + '_' + row);
+				_this.initCell(col, row, cell.get('data'), check);
+			}
+		}
+
 	});
-	var numDone = 0;
-	var check = function() {
-		numDone++;
-		if (numDone == cells.length) {
-			done(numDone);
-		}
-	};
-
-	for (var i = 0; i < cells.length; i++) {
-		var cell = cells[i];
-		this.initCell(cell.col, cell.row, cell.data, check);
-	}
-
-	if (cells.length == 0) {
-		done();
-	}
 };
 
 return Easel;

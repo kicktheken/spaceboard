@@ -1,15 +1,8 @@
-define(['easel'],function(Easel) {
+define(['easel','dropbox'],function(Easel) {
 
-var stage = new Easel(window.innerWidth, window.innerHeight);
-stage.load(function(numLoaded) {
-	if (!numLoaded) {
-		stage.initCell(0,0);
-		console.log('initialize blank stage');
-	} else {
-		console.log('stage loaded with data');
-	}
-	run();
-});
+var client = new Dropbox.Client({key: '3d684nqsmfta8ur'});
+authenticate();
+
 
 function getTouch(e) {
 	if (e.touches && e.touches.length > 0) {
@@ -60,6 +53,32 @@ function getDistance(touch) {
 		dist += Math.sqrt(dx * dx + dy * dy);
 	}
 	return dist;
+}
+
+var stage;
+function authenticate() {
+
+	// Try to finish OAuth authorization.
+	client.authenticate({interactive: false}, function (error) {
+		if (error) {
+			alert('Authentication error: ' + error);
+		}
+	});
+
+	if (client.isAuthenticated()) {
+		stage = new Easel(window.innerWidth, window.innerHeight, client);
+		stage.load(function(numLoaded) {
+			if (!numLoaded) {
+				stage.initCell(0,0);
+				console.log('initialize blank stage');
+			} else {
+				console.log('stage loaded with data');
+			}
+			run();
+		});
+	} else {
+		client.authenticate();
+	}
 }
 
 //
