@@ -60,7 +60,6 @@ function initialize(client) {
 	stage = new Easel(window.innerWidth, window.innerHeight, client);
 	stage.load(function(numLoaded) {
 		if (!numLoaded) {
-			//stage.initCell(0,0);
 			console.log('initialize blank stage');
 		} else {
 			console.log('stage loaded with data');
@@ -97,11 +96,13 @@ function authenticate(client) {
 function run() {
 	var prevTouch;
 	var touchRespond;
+	var hasMoved;
 
 	var touchBegin = function(e) {
 		e.preventDefault();
 		stage.stopInertiaScroll();
 		var touch = getTouch(e);
+		hasMoved = false;
 		touchRespond = function() {
 			if (touch.length > 2) {
 				setEraser(touch);
@@ -123,6 +124,7 @@ function run() {
 					var dy = touch.y - prevTouch.y;
 					stage.translate(dx,dy);
 				} else {
+					hasMoved = true;
 					stage.lineDraw(prevTouch.x, prevTouch.y, touch.x, touch.y);
 				}
 				prevTouch = touch
@@ -133,10 +135,12 @@ function run() {
 	var touchEnd = function(e) {
 		e.preventDefault();
 		if (prevTouch && prevTouch.length == 1) {
+			if (!hasMoved) {
 			var touch = prevTouch;
-			touchRespond = function() {
-				stage.startDraw(touch.x, touch.y);
-			};
+				touchRespond = function() {
+					stage.startDraw(touch.x, touch.y);
+				};
+			}
 		} else {
 			touchRespond = function() {
 				stage.stopZoom();

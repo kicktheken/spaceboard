@@ -68,16 +68,23 @@ Canvas.prototype.init = function() {
 			
 			for (var i = 0; i < segments.length; i++) {
 				var segment = segments[i].split(',');
-				if (segment.length <= 2) {
-					continue;
-				}
 				this.points.push(segment);
 				context.beginPath();
-				context.moveTo(parseFloat(segment[0]), parseFloat(segment[1]));
-				for (var j = 2; j < segment.length; j += 2) {
-					context.lineTo(parseFloat(segment[j]), parseFloat(segment[j+1]));
+				var x = parseFloat(segment[0]);
+				var y = parseFloat(segment[1]);
+				if (segment.length == 2) {
+					context.arc(x, y, THICKNESS / 2, 0, 2 * Math.PI, false);
+					context.fillStyle = COLOR;
+					context.fill();
+				} else {
+					context.moveTo(x, y);
+					for (var j = 2; j < segment.length; j += 2) {
+						x = parseFloat(segment[j]);
+						y = parseFloat(segment[j+1]);
+						context.lineTo(x, y);
+					}
+					context.stroke();
 				}
-				context.stroke();
 			}
 
 			this.data = null;
