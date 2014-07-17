@@ -14,10 +14,12 @@ Number.prototype.floor = function() {
 var pool = [];
 var retina = false;
 var debug = true;
+var resolutionScale = .5;
 
 function Canvas(width, height, data, callback) {
 	this.width = width;
-	this.height = height
+	this.height = height;
+	this.scale = 1;
 	var canvas;
 	if (callback) {
 		this.data = data;
@@ -27,19 +29,12 @@ function Canvas(width, height, data, callback) {
 		canvas.retinaResolutionEnabled = retina;
 		canvas.width = width;
 		canvas.height = height;
+		setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
 		this.canvas = canvas;
 	} else {
 		canvas = this.initCanvas();
 	}
-	if (retina) {
-		canvas.style.width = canvas.width + 'px';
-		canvas.style.height = canvas.height + 'px';
-		canvas.width = canvas.width * 2
-		canvas.height = canvas.height * 2
-	}
-	if (typeof window.ejecta === 'undefined') {
-		setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
-	}
+	
 	if (debug) {
 		var context = canvas.getContext('2d');
 		this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
@@ -53,8 +48,6 @@ Canvas.prototype.init = function(callback) {
 	if (!this.canvas) {
 		if (this.data) {
 			var canvas = this.canvas = this.initCanvas();
-			canvas.width = this.width;
-			canvas.height = this.height;
 			var img = new Image();
 			var _this = this;
 			img.onload = function() {
@@ -73,14 +66,18 @@ Canvas.prototype.init = function(callback) {
 };
 
 Canvas.prototype.initCanvas = function() {
+	var canvas;
 	if (pool.length > 0) {
-		return pool.shift();
+		canvas = pool.shift();
+	} else {
+		canvas = document.createElement('canvas');
+		canvas.retinaResolutionEnabled = retina;
 	}
-	var canvas = document.createElement('canvas');
-	canvas.retinaResolutionEnabled = retina;
-	canvas.width = this.width;
-	canvas.height = this.height;
+	this.scale = resolutionScale;
+	canvas.width = this.width * this.scale;
+	canvas.height = this.height * this.scale;
 	this.canvas = canvas;
+	setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
 	return canvas;
 };
 
@@ -102,6 +99,9 @@ Canvas.prototype.release = function() {
 };
 
 Canvas.prototype.drawCircle = function(color, x, y, radius) {
+	x *= this.scale;
+	y *= this.scale;
+	radius *= this.scale;
 	var context = this.canvas.getContext('2d');
 	context.beginPath();
 	context.arc(x, y, radius, 0, 2 * Math.PI, false);
@@ -111,6 +111,12 @@ Canvas.prototype.drawCircle = function(color, x, y, radius) {
 };
 
 Canvas.prototype.drawLine = function(color, x1, y1, x2, y2, thickness) {
+	x1 *= this.scale;
+	y1 *= this.scale;
+	x2 *= this.scale;
+	y2 *= this.scale;
+	thickness *= this.scale;
+
 	var context = this.canvas.getContext('2d');
 	context.lineWidth = thickness;
 	context.lineCap = 'round';
@@ -143,6 +149,9 @@ Canvas.prototype.clear = function(color) {
 };
 
 Canvas.prototype.clearCircle = function(x, y, radius) {
+	x *= this.scale;
+	y *= this.scale;
+	radius *= this.scale;
 	var context = this.canvas.getContext('2d');
 	context.save();
 	if (debug) {

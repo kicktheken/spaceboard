@@ -136,6 +136,7 @@ function run() {
 	document.addEventListener('touchstart', touchBegin);
 	document.addEventListener('touchmove', touchMove);
 	document.addEventListener('touchend', touchEnd);
+	document.addEventListener('touchcancel', touchEnd);
 
 	if (/Mac OS/i.test(navigator.userAgent)) { // trackpad scrolling is win
 		var ffVersion = navigator.userAgent.match(/Firefox\/\d+/i);
@@ -164,17 +165,7 @@ function run() {
 		stage.update();
 	})();
 
-	document.addEventListener('pagehide', function() {
-		for (var i = 0; i < stage.active.length; i++) {
-			stage.active[i].release();
-		}
-	});
-	document.addEventListener('pageshow', function() {
-		for (var i = 0; i < stage.active.length; i++) {
-			stage.active[i].init();
-		}
-	});
-
+	
 	var unload = function(e) {
 		stage.save();
 	};
