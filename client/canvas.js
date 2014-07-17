@@ -11,6 +11,8 @@ Number.prototype.floor = function() {
 	return Math.floor(this);
 };
 
+COLOR = 'yellow';
+THICKNESS = 6;
 var pool = [];
 var retina = false;
 var debug = true;
@@ -60,9 +62,9 @@ Canvas.prototype.init = function(callback) {
 			var context = canvas.getContext('2d');
 			var segments = this.data.split('_');
 
-			context.lineWidth = 5;
+			context.lineWidth = THICKNESS;
 			context.lineCap = 'round';
-			context.strokeStyle = 'yellow';
+			context.strokeStyle = COLOR;
 			
 			for (var i = 0; i < segments.length; i++) {
 				var segment = segments[i].split(',');

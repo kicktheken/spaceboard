@@ -1,7 +1,5 @@
 define(['canvas'],function() {
 
-var color = 'yellow';
-var thickness = 5;
 var maxZoom = 1;
 var minZoom = .2;
 var bPooling = true;
@@ -150,10 +148,10 @@ Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
 	this.initCell(
 		coords.col + offsetCol, coords.row + offsetRow
 	).drawCircle(
-		color,
+		COLOR,
 		coords.x - (offsetCol * this.stage.width),
 		coords.y - (offsetRow * this.stage.height),
-		thickness / 2
+		THICKNESS / 2
 	);
 	return this;
 };
@@ -161,7 +159,7 @@ Easel.prototype._startDraw = function(coords, offsetCol, offsetRow) {
 Easel.prototype.startDraw = function(x,y) {
 	var coords = this.translateCoords(x,y);
 
-	var neighbors = this.getZoneNeighbors(coords, thickness / 2);
+	var neighbors = this.getZoneNeighbors(coords, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
 		this._startDraw(coords, neighbors[i][0], neighbors[i][1]);
 	}
@@ -185,12 +183,12 @@ Easel.prototype._lineDraw = function(coords1, coords2, offsetCol, offsetRow) {
 	this.initCell(
 		coords1.col + offsetCol, coords1.row + offsetRow
 	).drawLine(
-		color,
+		COLOR,
 		coords1.x - (offsetCol * this.stage.width),
 		coords1.y - (offsetRow * this.stage.height),
 		coords2.x - ((offsetCol + coords1.col - coords2.col) * this.stage.width),
 		coords2.y - ((offsetRow  + coords1.row - coords2.row) * this.stage.height),
-		thickness
+		THICKNESS
 	);
 };
 
@@ -200,14 +198,14 @@ Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
 
 	// this method may have multiple draw calls for the same area
 	// but it should be performant enough that that doesn't matter
-	var neighbors = this.getZoneNeighbors(coords1, thickness / 2);
+	var neighbors = this.getZoneNeighbors(coords1, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
 		this._lineDraw(coords1, coords2, neighbors[i][0], neighbors[i][1]);
 	}
 	this._lineDraw(coords1, coords2);
 
 
-	neighbors = this.getZoneNeighbors(coords2, thickness / 2);
+	neighbors = this.getZoneNeighbors(coords2, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
 		this._lineDraw(coords2, coords1, neighbors[i][0], neighbors[i][1]);
 	}
