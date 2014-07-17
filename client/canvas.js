@@ -18,7 +18,7 @@ var retina = false;
 var debug = true;
 var resolutionScale = 1;
 
-function Canvas(width, height, data, callback) {
+function Canvas(width, height, data) {
 	this.width = width;
 	this.height = height;
 	this.scale = 1;
@@ -33,7 +33,7 @@ function Canvas(width, height, data, callback) {
 		this.canvas = canvas;
 	} else if (data) {
 		this.data = data;
-		canvas = this.init(callback);
+		canvas = this.init();
 	} else {
 		canvas = this.initCanvas();
 		if (debug) {
@@ -48,17 +48,16 @@ function Canvas(width, height, data, callback) {
 	return this;
 }
 
-Canvas.prototype.init = function(callback) {
+Canvas.prototype.init = function() {
 	if (!this.canvas) {
+		var canvas = this.canvas = this.initCanvas();
+		if (debug) {
+			var context = canvas.getContext('2d');
+			this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
+			context.fillStyle = this.color;
+			context.fillRect(0,0,this.width,this.height);
+		}
 		if (this.data) {
-			var canvas = this.canvas = this.initCanvas();
-
-			if (debug) {
-				var context = canvas.getContext('2d');
-				this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
-				context.fillStyle = this.color;
-				context.fillRect(0,0,this.width,this.height);
-			}
 			var context = canvas.getContext('2d');
 			var segments = this.data.split('_');
 
@@ -68,20 +67,22 @@ Canvas.prototype.init = function(callback) {
 			
 			for (var i = 0; i < segments.length; i++) {
 				var segment = segments[i].split(',');
+				if (segment.length <= 2) {
+					continue;
+				}
 				this.points.push(segment);
 				context.beginPath();
-				context.moveTo(segment[0], segment[1]);
+				context.moveTo(parseFloat(segment[0]), parseFloat(segment[1]));
 				for (var j = 2; j < segment.length; j += 2) {
-					context.lineTo(segment[j], segment[j+1]);
+					context.lineTo(parseFloat(segment[j]), parseFloat(segment[j+1]));
 				}
 				context.stroke();
 			}
 
 			this.data = null;
-			return this.canvas;
 		} else {
-			console.error("missing data at cell "+[this.col,this.row].join());
 		}
+		return canvas;
 	}
 };
 

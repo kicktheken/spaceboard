@@ -30,7 +30,7 @@ function Easel(width, height, client) {
 	}
 }
 
-Easel.prototype.initCell = function(col, row, data, callback) {
+Easel.prototype.initCell = function(col, row, data) {
 	if (!this.grid[row]) {
 		this.grid[row] = {};
 	}
@@ -46,7 +46,7 @@ Easel.prototype.initCell = function(col, row, data, callback) {
 		if (!data) {
 			data = this.getData(col,row);
 		}
-		cell = new Canvas(this.stage.width, this.stage.height, data, callback);
+		cell = new Canvas(this.stage.width, this.stage.height, data);
 		this.grid[row][col] = cell;
 		cell.col = col;
 		cell.row = row;
@@ -373,14 +373,16 @@ Easel.prototype.update = function() {
 				this.active.splice(i,1);
 				var data = cell.release();
 				var key = cell.col + '_' + cell.row;
-				if (this.datastore) {
-					this.replaceRecord(datastore.getTable('easel'), key, {
-						col: cell.col,
-						row: cell.row,
-						data: data
-					});
-				} else {
-					localStorage.setItem(key, data);
+				if (data) {
+					if (this.datastore) {
+						this.replaceRecord(datastore.getTable('easel'), key, {
+							col: cell.col,
+							row: cell.row,
+							data: data
+						});
+					} else {
+						localStorage.setItem(key, data);
+					}
 				}
 			}
 		}
