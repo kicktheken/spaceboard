@@ -1,4 +1,4 @@
-define(['easel','dropbox'],function(Easel) {
+define(['easel','lib/dropbox'],function(Easel) {
 
 var client = new Dropbox.Client({key: '3d684nqsmfta8ur'});
 authenticate(client);
