@@ -17,7 +17,7 @@ function Easel(width, height, client) {
 	this.ticks = 0;
 
 	this.scrollevents = [];
-	var extend = 2;
+	var extend = 0;
 	this.bounds = {
 		minx: -(1 / minZoom / 2 + extend) * width,
 		miny: -(1 / minZoom / 2 + extend) * height,
@@ -80,18 +80,18 @@ Easel.prototype.getData = function(col, row) {
 };
 
 Easel.prototype.updateBounds = function(x,y) {
-	x -= this.stage.width / 2;
-	y -= this.stage.height / 2;
+	var offsetX = (1 / minZoom / 2) * this.stage.width;
+	var offsetY = (1 / minZoom / 2) * this.stage.height;
 
-	if (x < this.bounds.minx) {
-		this.bounds.minx = x;
-	} else if (x > this.bounds.maxx) {
-		this.bounds.maxx = x;
+	if (x < this.bounds.minx + offsetX) {
+		this.bounds.minx = x - offsetX;
+	} else if (x > this.bounds.maxx - offsetX) {
+		this.bounds.maxx = x + offsetX;
 	}
-	if (y < this.bounds.miny) {
-		this.bounds.miny = y;
-	} else if (y > this.bounds.maxy) {
-		this.bounds.maxy = y;
+	if (y < this.bounds.miny + offsetY) {
+		this.bounds.miny = y - offsetY;
+	} else if (y > this.bounds.maxy - offsetY) {
+		this.bounds.maxy = y + offsetY;
 	}
 };
 
@@ -102,7 +102,7 @@ Easel.prototype.translateCoords = function(x,y) {
 	var col = Math.floor(x / this.stage.width);
 	var row = Math.floor(y / this.stage.height);
 
-	//this.updateBounds(x,y);
+	this.updateBounds(x,y);
 	x -= col * this.stage.width;
 	y -= row * this.stage.height;
 
@@ -266,7 +266,7 @@ Easel.prototype.zoom = function(dist, x, y) {
 		newscale = minZoom;
 	}
 
-	var scale = (newscale - this.scale) / newscale;
+	var scale = (newscale - this.scale) / this.scale;
 	this.x -= scale * (x - this.x);
 	this.y -= scale * (y - this.y);
 	this.scale = newscale;
@@ -409,6 +409,10 @@ Easel.prototype.save = function() {
 		localStorage.setItem('x', this.x);
 		localStorage.setItem('y', this.y);
 		localStorage.setItem('scale', this.scale);
+		localStorage.setItem('minx', this.bounds.minx);
+		localStorage.setItem('miny', this.bounds.miny);
+		localStorage.setItem('maxx', this.bounds.maxx);
+		localStorage.setItem('maxy', this.bounds.maxy);
 		return;
 	}
 
@@ -429,7 +433,11 @@ Easel.prototype.save = function() {
 	this.replaceRecord(easelTable, 'this',{
 		x: this.x,
 		y: this.y,
-		scale: this.scale
+		scale: this.scale,
+		minx: this.bounds.minx,
+		miny: this.bounds.miny,
+		maxx: this.bounds.maxx,
+		maxy: this.bounds.maxy
 	});
 };
 
@@ -438,6 +446,10 @@ Easel.prototype.load = function(done) {
 		this.x = parseFloat(localStorage.getItem('x')) || 0;
 		this.y = parseFloat(localStorage.getItem('y')) || 0;
 		this.scale = parseFloat(localStorage.getItem('scale')) || 1;
+		this.bounds.minx = parseFloat(localStorage.getItem('minx')) || this.bounds.minx;
+		this.bounds.miny = parseFloat(localStorage.getItem('miny')) || this.bounds.miny;
+		this.bounds.maxx = parseFloat(localStorage.getItem('maxx')) || this.bounds.maxx;
+		this.bounds.maxy = parseFloat(localStorage.getItem('maxy')) || this.bounds.maxy;
 
 		var v = this.getViewport();
 		var numCellsWithData = 0;
@@ -470,6 +482,10 @@ Easel.prototype.load = function(done) {
 		_this.x = record.get('x');
 		_this.y = record.get('y');
 		_this.scale = record.get('scale');
+		_this.bounds.minx = record.get('minx');
+		_this.bounds.miny = record.get('miny');
+		_this.bounds.maxx = record.get('maxx');
+		_this.bounds.maxy = record.get('maxy');
 		_this.datastore = datastore;
 
 		var cellTable = datastore.getTable('cells');

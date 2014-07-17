@@ -22,6 +22,7 @@ function Canvas(width, height, data) {
 	this.width = width;
 	this.height = height;
 	this.scale = 1;
+	this.points = [];
 
 	var canvas;
 	if (data == true) {
@@ -99,7 +100,6 @@ Canvas.prototype.initCanvas = function() {
 	canvas.height = this.height * this.scale;
 	this.canvas = canvas;
 	setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
-	this.points = [];
 	return canvas;
 };
 
