@@ -34,14 +34,15 @@ function Canvas(width, height, data, callback) {
 		canvas = this.init(callback);
 	} else {
 		canvas = this.initCanvas();
+		if (debug) {
+			var context = canvas.getContext('2d');
+			this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
+			context.fillStyle = this.color;
+			context.fillRect(0,0,width,height);
+		}
 	}
 	
-	if (debug) {
-		var context = canvas.getContext('2d');
-		this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
-		context.fillStyle = this.color;
-		context.fillRect(0,0,width,height);
-	}
+	
 	return this;
 }
 
@@ -49,15 +50,31 @@ Canvas.prototype.init = function(callback) {
 	if (!this.canvas) {
 		if (this.data) {
 			var canvas = this.canvas = this.initCanvas();
-			var img = new Image();
-			var _this = this;
-			img.onload = function() {
-				canvas.getContext('2d').drawImage(this,0,0);
-				if (callback) {
-					callback();
+
+			if (debug) {
+				var context = canvas.getContext('2d');
+				this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
+				context.fillStyle = this.color;
+				context.fillRect(0,0,this.width,this.height);
+			}
+			var context = canvas.getContext('2d');
+			var segments = this.data.split('_');
+
+			context.lineWidth = 5;
+			context.lineCap = 'round';
+			context.strokeStyle = 'yellow';
+			
+			for (var i = 0; i < segments.length; i++) {
+				var segment = segments[i].split(',');
+				this.points.push(segment);
+				context.beginPath();
+				context.moveTo(segment[0], segment[1]);
+				for (var j = 2; j < segment.length; j += 2) {
+					context.lineTo(segment[j], segment[j+1]);
 				}
-			};
-			img.src = this.data;
+				context.stroke();
+			}
+
 			this.data = null;
 			return this.canvas;
 		} else {
@@ -79,6 +96,7 @@ Canvas.prototype.initCanvas = function() {
 	canvas.height = this.height * this.scale;
 	this.canvas = canvas;
 	setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
+	this.points = [];
 	return canvas;
 };
 
@@ -91,7 +109,14 @@ Canvas.prototype.release = function() {
 			throw new Error("cannot release a released canvas");
 		}
 	}
-	this.data = retina || canvas.retinaResolutionEnabled ? canvas.toDataURLHD() : canvas.toDataURL();
+
+	if (this.points.length > 0) {
+		this.data = '';
+		this.data += this.points[0].join(',');
+		for (var i = 1; i < this.points.length; i++) {
+			this.data += '_' + this.points[i].join(',');
+		}
+	}
 	pool.push(canvas);
 	canvas.height = 1;
 	//canvas.width = canvas.width;
@@ -108,6 +133,7 @@ Canvas.prototype.drawCircle = function(color, x, y, radius) {
 	context.arc(x, y, radius, 0, 2 * Math.PI, false);
 	context.fillStyle = color;
 	context.fill();
+	this.points.push([x,y]);
 	return this;
 };
 
@@ -126,6 +152,20 @@ Canvas.prototype.drawLine = function(color, x1, y1, x2, y2, thickness) {
 	context.moveTo(x1, y1);
 	context.lineTo(x2, y2);
 	context.stroke();
+
+	if (this.points.length > 0) {
+		var lastSet = this.points[this.points.length - 1];
+		var x = lastSet[lastSet.length - 2];
+		var y = lastSet[lastSet.length - 1];
+		if (x == x1 && y == y1) {
+			lastSet.push(x2);
+			lastSet.push(y2);
+		} else {
+			this.points.push([x1, y1, x2, y2]);
+		}
+	} else {
+		this.points.push([x1, y1, x2, y2]);
+	}
 	return this;
 };
 

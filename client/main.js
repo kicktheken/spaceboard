@@ -1,6 +1,6 @@
 define(['easel','dropbox'],function(Easel) {
 
-var client = new Dropbox.Client({key: '3d684nqsmfta8ur'});
+var client// = new Dropbox.Client({key: '3d684nqsmfta8ur'});
 authenticate(client);
 
 
@@ -60,7 +60,7 @@ function initialize(client) {
 	stage = new Easel(window.innerWidth, window.innerHeight, client);
 	stage.load(function(numLoaded) {
 		if (!numLoaded) {
-			stage.initCell(0,0);
+			//stage.initCell(0,0);
 			console.log('initialize blank stage');
 		} else {
 			console.log('stage loaded with data');
@@ -195,7 +195,7 @@ function run() {
 
 	
 	var unload = function(e) {
-		stage.save();
+		return stage.save();
 	};
 	window.onbeforeunload = unload;
 	window.onunload = unload;

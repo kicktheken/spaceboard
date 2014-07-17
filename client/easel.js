@@ -171,7 +171,6 @@ Easel.prototype.startDraw = function(x,y) {
 	if (this.datastore) {
 		var data = this.grid[coords.row][coords.col].release();
 		var key = coords.col + '_' + coords.row;
-		console.log('save on draw release');
 		this.replaceRecord(datastore.getTable('easel'), key, {
 			col: coords.col,
 			row: coords.row,
@@ -402,7 +401,10 @@ Easel.prototype.save = function() {
 		for (var i = 0; i < this.active.length; i++) {
 			var canvas = this.active[i];
 			var key = canvas.col + '_' + canvas.row;
-			localStorage.setItem(key, canvas.release());
+			var data = canvas.release();
+			if (data) {
+				localStorage.setItem(key, data);
+			}
 		}
 		localStorage.setItem('x', this.x);
 		localStorage.setItem('y', this.y);
@@ -413,11 +415,14 @@ Easel.prototype.save = function() {
 	var cellTable = this.datastore.getTable('cells');
 	for (var i = 0; i < this.active.length; i++) {
 		var cell = this.active[i];
-		this.replaceRecord(cellTable, cell.col + '_' + cell.row, {
-			col: cell.col,
-			row: cell.row,
-			data: cell.release()
-		});
+		var data = cell.release();
+		if (data) {
+			this.replaceRecord(cellTable, cell.col + '_' + cell.row, {
+				col: cell.col,
+				row: cell.row,
+				data: data
+			});
+		}
 	}
 
 	var easelTable = this.datastore.getTable('easel');
@@ -435,33 +440,21 @@ Easel.prototype.load = function(done) {
 		this.scale = parseFloat(localStorage.getItem('scale')) || 1;
 
 		var v = this.getViewport();
-		var pending = 0;
-
-		var hasData = false;
-		var finished = false;
-		var check = function() {
-			pending--;
-			if (pending == 0 && finished) {
-				done(hasData);
-			}
-		};
+		var numCellsWithData = 0;
 
 		for (var row = v.minrow; row < v.minrow + v.rows; row++) {
 			for (var col = v.mincol; col < v.mincol + v.cols; col++) {
 				var data = localStorage.getItem(col + '_' + row);
 				if (data) {
-					hasData = true;
-					pending++;
-					this.initCell(col, row, data, check);
+					numCellsWithData++;
+					this.initCell(col, row, data);
 				} else {
 					this.initCell(col, row);
 				}
 			}
 		}
-		finished = true;
-		if (pending == 0) {
-			done(hasData);
-		}
+
+		done(numCellsWithData);
 		return;
 	}
 	var _this = this;
@@ -481,22 +474,19 @@ Easel.prototype.load = function(done) {
 
 		var cellTable = datastore.getTable('cells');
 		var v = _this.getViewport();
-		var numDone = 0;
-
-		var check = function() {
-			numDone++;
-			if (numDone == v.cols * v.rows) {
-				done(numDone);
-			}
-		};
+		var numCellsWithData = 0;
 
 		for (var row = v.minrow; row < v.minrow + v.rows; row++) {
 			for (var col = v.mincol; col < v.mincol + v.cols; col++) {
 				var cell = cellTable.get(col + '_' + row);
-				_this.initCell(col, row, cell.get('data'), check);
+				if (cell) {
+					numCellsWithData++;
+					_this.initCell(col, row, cell.get('data'), check);
+				}
 			}
 		}
 
+		done(numCellsWithData);
 	});
 };
 
