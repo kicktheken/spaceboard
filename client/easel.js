@@ -350,10 +350,15 @@ Easel.prototype.save = function() {
 		var key = canvas.col + '_' + canvas.row;
 		localStorage.setItem(key, canvas.release());
 	}
+	localStorage.setItem('x', this.x);
+	localStorage.setItem('y', this.y);
+	localStorage.setItem('scale', this.scale);
+
 };
 
 Easel.prototype.load = function(done) {
 	var cells = [];
+	var _this = this;
 	Object.keys(localStorage).forEach(function(key){
 		var s = key.split('_');
 		if (s.length == 2) {
@@ -362,6 +367,8 @@ Easel.prototype.load = function(done) {
 				row: parseInt(s[1]),
 				data: localStorage.getItem(key)
 			});
+		} else {
+			_this[key] = parseFloat(localStorage.getItem(key));
 		}
 	});
 	var numDone = 0;
