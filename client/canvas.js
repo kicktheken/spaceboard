@@ -15,17 +15,29 @@ var pool = [];
 var retina = false;
 var debug = true;
 
-function Canvas(width, height, stage) {
-	var canvas = this.canvas = stage ? document.getElementById('canvas') : this.initCanvas();
-	this.width = canvas.width = width;
-	this.height = canvas.height = height;
+function Canvas(width, height, data, callback) {
+	this.width = width;
+	this.height = height
+	var canvas;
+	if (callback) {
+		this.data = data;
+		canvas = this.init(callback);
+	} else if (data) {
+		canvas = document.getElementById('canvas');
+		canvas.retinaResolutionEnabled = retina;
+		canvas.width = width;
+		canvas.height = height;
+		this.canvas = canvas;
+	} else {
+		canvas = this.initCanvas();
+	}
 	if (retina) {
 		canvas.style.width = canvas.width + 'px';
 		canvas.style.height = canvas.height + 'px';
 		canvas.width = canvas.width * 2
 		canvas.height = canvas.height * 2
 	}
-	if (stage && typeof window.ejecta === 'undefined') {
+	if (typeof window.ejecta === 'undefined') {
 		setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
 	}
 	if (debug) {
@@ -37,18 +49,23 @@ function Canvas(width, height, stage) {
 	return this;
 }
 
-Canvas.prototype.init = function() {
+Canvas.prototype.init = function(callback) {
 	if (!this.canvas) {
 		if (this.data) {
 			var canvas = this.canvas = this.initCanvas();
+			canvas.width = this.width;
+			canvas.height = this.height;
 			var img = new Image();
 			var _this = this;
 			img.onload = function() {
 				canvas.getContext('2d').drawImage(this,0,0);
+				if (callback) {
+					callback();
+				}
 			};
 			img.src = this.data;
 			this.data = null;
-			return true;
+			return this.canvas;
 		} else {
 			throw new Error("cannot reinitialize canvas without data url");
 		}
@@ -61,15 +78,27 @@ Canvas.prototype.initCanvas = function() {
 	}
 	var canvas = document.createElement('canvas');
 	canvas.retinaResolutionEnabled = retina;
+	canvas.width = this.width;
+	canvas.height = this.height;
+	this.canvas = canvas;
 	return canvas;
 };
 
 Canvas.prototype.release = function() {
 	var canvas = this.canvas;
+	if (!canvas) {
+		if (this.data) {
+			return this.data;
+		} else {
+			throw new Error("cannot release a released canvas");
+		}
+	}
 	this.data = retina || canvas.retinaResolutionEnabled ? canvas.toDataURLHD() : canvas.toDataURL();
 	pool.push(canvas);
-	canvas.width = canvas.width;
+	canvas.height = 1;
+	//canvas.width = canvas.width;
 	this.canvas = null;
+	return this.data;
 };
 
 Canvas.prototype.drawCircle = function(color, x, y, radius) {

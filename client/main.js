@@ -1,6 +1,15 @@
 define(['easel'],function(Easel) {
 
 var stage = new Easel(window.innerWidth, window.innerHeight);
+stage.load(function(numLoaded) {
+	if (!numLoaded) {
+		stage.initCell(0,0);
+		console.log('initialize blank stage');
+	} else {
+		console.log('stage loaded with data');
+	}
+	run();
+});
 
 function getTouch(e) {
 	if (e.touches && e.touches.length > 0) {
@@ -24,9 +33,6 @@ function getTouch(e) {
 	}
 	return ret;
 }
-
-var prevTouch;
-var touchRespond;
 
 function setEraser(touch) {
 	var maxRadius = 0;
@@ -56,100 +62,125 @@ function getDistance(touch) {
 	return dist;
 }
 
-var touchBegin = function(e) {
-	e.preventDefault();
-	stage.stopInertiaScroll();
-	var touch = getTouch(e);
-	touchRespond = function() {
-		if (touch.length > 2) {
-			setEraser(touch);
-		}
-	};
-	prevTouch = touch
-};
+//
+// main code
+//
 
-var touchMove = function(e) {
-	e.preventDefault();
-	var touch = getTouch(e);
-	touchRespond = function() {
-		if (prevTouch) {
+function run() {
+	var prevTouch;
+	var touchRespond;
+
+	var touchBegin = function(e) {
+		e.preventDefault();
+		stage.stopInertiaScroll();
+		var touch = getTouch(e);
+		touchRespond = function() {
 			if (touch.length > 2) {
 				setEraser(touch);
-			} else if (touch.length == 2) {
-				stage.zoom(getDistance(touch), touch.x, touch.y);
-				var dx = touch.x - prevTouch.x;
-				var dy = touch.y - prevTouch.y;
-				stage.translate(dx,dy);
-			} else {
-				stage.lineDraw(prevTouch.x, prevTouch.y, touch.x, touch.y);
 			}
-			prevTouch = touch
+		};
+		prevTouch = touch
+	};
+
+	var touchMove = function(e) {
+		e.preventDefault();
+		var touch = getTouch(e);
+		touchRespond = function() {
+			if (prevTouch) {
+				if (touch.length > 2) {
+					setEraser(touch);
+				} else if (touch.length == 2) {
+					stage.zoom(getDistance(touch), touch.x, touch.y);
+					var dx = touch.x - prevTouch.x;
+					var dy = touch.y - prevTouch.y;
+					stage.translate(dx,dy);
+				} else {
+					stage.lineDraw(prevTouch.x, prevTouch.y, touch.x, touch.y);
+				}
+				prevTouch = touch
+			}
+		};
+	};
+
+	var touchEnd = function(e) {
+		e.preventDefault();
+		if (prevTouch && prevTouch.length == 1) {
+			var touch = prevTouch;
+			touchRespond = function() {
+				stage.startDraw(touch.x, touch.y);
+			};
+		} else {
+			touchRespond = function() {
+				stage.stopZoom();
+				stage.unsetEraser();
+				stage.startInertiaScroll();
+			};
 		}
+		prevTouch = null;
 	};
-};
-
-var touchEnd = function(e) {
-	e.preventDefault();
-	if (prevTouch && prevTouch.length == 1) {
-		var touch = prevTouch;
-		touchRespond = function() {
-			stage.startDraw(touch.x, touch.y);
-		};
-	} else {
-		touchRespond = function() {
-			stage.stopZoom();
-			stage.unsetEraser();
-			stage.startInertiaScroll();
-		};
-	}
-	prevTouch = null;
-	
-};
 
 
-function makeCallback(f) {
-	return function(e) {
-		touchRespond = function() {
-			f(e);
-			touchRespond = null;
+	function makeCallback(f) {
+		return function(e) {
+			touchRespond = function() {
+				f(e);
+				touchRespond = null;
+			};
 		};
 	};
-};
 
-document.addEventListener('mousedown', touchBegin);
-document.addEventListener('mousemove', touchMove);
-document.addEventListener('mouseup', touchEnd);
+	document.addEventListener('mousedown', touchBegin);
+	document.addEventListener('mousemove', touchMove);
+	document.addEventListener('mouseup', touchEnd);
 
-document.addEventListener('touchstart', touchBegin);
-document.addEventListener('touchmove', touchMove);
-document.addEventListener('touchend', touchEnd);
+	document.addEventListener('touchstart', touchBegin);
+	document.addEventListener('touchmove', touchMove);
+	document.addEventListener('touchend', touchEnd);
 
-if (/Mac OS/i.test(navigator.userAgent)) { // trackpad scrolling is win
-	var ffVersion = navigator.userAgent.match(/Firefox\/\d+/i);
-	if (ffVersion) {
-		ffVersion = ffVersion[0].substring(ffVersion[0].indexOf('/')+1);
-		if (ffVersion > 16) { // deltaX only works on FF 17.0+
+	if (/Mac OS/i.test(navigator.userAgent)) { // trackpad scrolling is win
+		var ffVersion = navigator.userAgent.match(/Firefox\/\d+/i);
+		if (ffVersion) {
+			ffVersion = ffVersion[0].substring(ffVersion[0].indexOf('/')+1);
+			if (ffVersion > 16) { // deltaX only works on FF 17.0+
+				initMouseScroll();
+				window.addWheelListener(document, function(e) {
+					stage.translate(e.deltaX, e.deltaY);
+				});
+			}
+		} else if (/webkit/i.test(navigator.userAgent)) {
 			initMouseScroll();
 			window.addWheelListener(document, function(e) {
-				stage.translate(e.deltaX, e.deltaY);
+				stage.translate(e.deltaX * 20, e.deltaY * 20);
 			});
 		}
-	} else if (/webkit/i.test(navigator.userAgent)) {
-		initMouseScroll();
-		window.addWheelListener(document, function(e) {
-			stage.translate(e.deltaX * 20, e.deltaY * 20);
-		});
 	}
-}
 
-(function animloop(){
-	requestAnimationFrame(animloop);
-	if (touchRespond) {
-		touchRespond();
-		touchRespond = null;
-	}
-	stage.update();
-})();
+	(function animloop(){
+		requestAnimationFrame(animloop);
+		if (touchRespond) {
+			touchRespond();
+			touchRespond = null;
+		}
+		stage.update();
+	})();
+
+	document.addEventListener('pagehide', function() {
+		for (var i = 0; i < stage.active.length; i++) {
+			stage.active[i].release();
+		}
+	});
+	document.addEventListener('pageshow', function() {
+		for (var i = 0; i < stage.active.length; i++) {
+			stage.active[i].init();
+		}
+	});
+
+	var unload = function(e) {
+		stage.save();
+	};
+	window.onbeforeunload = unload;
+	window.onunload = unload;
+}
 
 function initMouseScroll() {
     var prefix = "", _addEventListener, onwheel, support;

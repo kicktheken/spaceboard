@@ -1,16 +1,15 @@
 define(['canvas'],function() {
 
 var color = 'yellow';
-var thickness = 10;
+var thickness = 5;
 var maxZoom = 1;
 var minZoom = .2;
 var bPooling = false;
 
-function Easel(width, height) {
+function Easel(width, height, callback) {
 	this.stage = new Canvas(width, height, true);
 	this.grid = {};
 	this.active = [];
-	this.initCell(0,0);
 	this.x = 0;
 	this.y = 0;
 
@@ -20,15 +19,16 @@ function Easel(width, height) {
 	this.ticks = 0;
 
 	this.scrollevents = [];
+	var extend = 2;
 	this.bounds = {
-		minx: -(1 / minZoom / 2 + 1) * width,
-		miny: -(1 / minZoom / 2 + 1) * height,
-		maxx: (1 / minZoom / 2 + 1) * width,
-		maxy: (1 / minZoom / 2 + 1) * height
+		minx: -(1 / minZoom / 2 + extend) * width,
+		miny: -(1 / minZoom / 2 + extend) * height,
+		maxx: (1 / minZoom / 2 + extend) * width,
+		maxy: (1 / minZoom / 2 + extend) * height
 	};
 }
 
-Easel.prototype.initCell = function(col, row) {
+Easel.prototype.initCell = function(col, row, data, callback) {
 	if (!this.grid[row]) {
 		this.grid[row] = {};
 	}
@@ -38,7 +38,7 @@ Easel.prototype.initCell = function(col, row) {
 			this.active.push(cell);
 		}
 	} else {
-		cell = new Canvas(this.stage.width, this.stage.height);
+		cell = new Canvas(this.stage.width, this.stage.height, data, callback);
 		this.grid[row][col] = cell;
 		cell.col = col;
 		cell.row = row;
@@ -342,7 +342,45 @@ Easel.prototype.update = function() {
 			}
 		}
 	}
-}
+};
+
+Easel.prototype.save = function() {
+	for (var i = 0; i < this.active.length; i++) {
+		var canvas = this.active[i];
+		var key = canvas.col + '_' + canvas.row;
+		localStorage.setItem(key, canvas.release());
+	}
+};
+
+Easel.prototype.load = function(done) {
+	var cells = [];
+	Object.keys(localStorage).forEach(function(key){
+		var s = key.split('_');
+		if (s.length == 2) {
+			cells.push({
+				col: parseInt(s[0]),
+				row: parseInt(s[1]),
+				data: localStorage.getItem(key)
+			});
+		}
+	});
+	var numDone = 0;
+	var check = function() {
+		numDone++;
+		if (numDone == cells.length) {
+			done(numDone);
+		}
+	};
+
+	for (var i = 0; i < cells.length; i++) {
+		var cell = cells[i];
+		this.initCell(cell.col, cell.row, cell.data, check);
+	}
+
+	if (cells.length == 0) {
+		done();
+	}
+};
 
 return Easel;
 
