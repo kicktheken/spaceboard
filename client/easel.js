@@ -66,11 +66,11 @@ Easel.prototype.initCells = function(startcol, startrow, cols, rows) {
 
 Easel.prototype.getData = function(col, row) {
 	var data;
-	if (this.datastorage) {
+	if (this.datastore) {
 		var cellTable = this.datastore.getTable('cells');
 		var record = cellTable.get(col + '_' + row);
 		if (record) {
-			data = cell.get('data');
+			data = record.get('data');
 		}
 	} else {
 		data = localStorage.getItem(col + '_' + row);
@@ -169,7 +169,7 @@ Easel.prototype.startDraw = function(x,y) {
 	if (this.datastore) {
 		var data = this.grid[coords.row][coords.col].release();
 		var key = coords.col + '_' + coords.row;
-		this.replaceRecord(datastore.getTable('easel'), key, {
+		this.replaceRecord(datastore.getTable('cells'), key, {
 			col: coords.col,
 			row: coords.row,
 			data: data
@@ -375,7 +375,7 @@ Easel.prototype.update = function() {
 				var key = cell.col + '_' + cell.row;
 				if (data) {
 					if (this.datastore) {
-						this.replaceRecord(datastore.getTable('easel'), key, {
+						this.replaceRecord(this.datastore.getTable('cells'), key, {
 							col: cell.col,
 							row: cell.row,
 							data: data
@@ -470,10 +470,12 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('turdstore',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('_0.1',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}
+		_this.datastore = datastore;
+
 		var easelTable = datastore.getTable('easel');
 		var record = easelTable.get('this');
 		if (!record) {
@@ -486,7 +488,6 @@ Easel.prototype.load = function(done) {
 		_this.bounds.miny = record.get('miny');
 		_this.bounds.maxx = record.get('maxx');
 		_this.bounds.maxy = record.get('maxy');
-		_this.datastore = datastore;
 
 		var cellTable = datastore.getTable('cells');
 		var v = _this.getViewport();
