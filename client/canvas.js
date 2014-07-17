@@ -14,23 +14,24 @@ Number.prototype.floor = function() {
 var pool = [];
 var retina = false;
 var debug = true;
-var resolutionScale = .5;
+var resolutionScale = 1;
 
 function Canvas(width, height, data, callback) {
 	this.width = width;
 	this.height = height;
 	this.scale = 1;
+
 	var canvas;
-	if (callback) {
-		this.data = data;
-		canvas = this.init(callback);
-	} else if (data) {
+	if (data == true) {
 		canvas = document.getElementById('canvas');
 		canvas.retinaResolutionEnabled = retina;
 		canvas.width = width;
 		canvas.height = height;
 		setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
 		this.canvas = canvas;
+	} else if (data) {
+		this.data = data;
+		canvas = this.init(callback);
 	} else {
 		canvas = this.initCanvas();
 	}
@@ -60,7 +61,7 @@ Canvas.prototype.init = function(callback) {
 			this.data = null;
 			return this.canvas;
 		} else {
-			throw new Error("cannot reinitialize canvas without data url");
+			console.error("missing data at cell "+[this.col,this.row].join());
 		}
 	}
 };

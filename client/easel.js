@@ -4,7 +4,7 @@ var color = 'yellow';
 var thickness = 5;
 var maxZoom = 1;
 var minZoom = .2;
-var bPooling = false;
+var bPooling = true;
 
 function Easel(width, height, client) {
 	this.stage = new Canvas(width, height, true);
@@ -38,10 +38,16 @@ Easel.prototype.initCell = function(col, row, data, callback) {
 	}
 	var cell = this.grid[row][col];
 	if (cell) {
+		if (!cell.canvas) {
+			cell.data = this.getData(col,row);
+		}
 		if (cell.init()) {
 			this.active.push(cell);
 		}
 	} else {
+		if (!data) {
+			data = this.getData(col,row);
+		}
 		cell = new Canvas(this.stage.width, this.stage.height, data, callback);
 		this.grid[row][col] = cell;
 		cell.col = col;
@@ -58,6 +64,21 @@ Easel.prototype.initCells = function(startcol, startrow, cols, rows) {
 			this.initCell(col,row);
 		}
 	}
+};
+
+Easel.prototype.getData = function(col, row) {
+	var data;
+	if (this.datastorage) {
+		var cellTable = this.datastore.getTable('cells');
+		var record = cellTable.get(col + '_' + row);
+		if (record) {
+			data = cell.get('data');
+		}
+	} else {
+		data = localStorage.getItem(col + '_' + row);
+	}
+	return data;
+
 };
 
 Easel.prototype.updateBounds = function(x,y) {
@@ -146,6 +167,17 @@ Easel.prototype.startDraw = function(x,y) {
 	}
 
 	this._startDraw(coords);
+
+	if (this.datastore) {
+		var data = this.grid[coords.row][coords.col].release();
+		var key = coords.col + '_' + coords.row;
+		console.log('save on draw release');
+		this.replaceRecord(datastore.getTable('easel'), key, {
+			col: coords.col,
+			row: coords.row,
+			data: data
+		});
+	}
 };
 
 Easel.prototype._lineDraw = function(coords1, coords2, offsetCol, offsetRow) {
@@ -342,7 +374,17 @@ Easel.prototype.update = function() {
 			var cell = this.active[i];
 			if (cell.tick != this.ticks) {
 				this.active.splice(i,1);
-				cell.release();
+				var data = cell.release();
+				var key = cell.col + '_' + cell.row;
+				if (this.datastore) {
+					this.replaceRecord(datastore.getTable('easel'), key, {
+						col: cell.col,
+						row: cell.row,
+						data: data
+					});
+				} else {
+					localStorage.setItem(key, data);
+				}
 			}
 		}
 	}
@@ -423,12 +465,15 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('hackweek',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('turdstore',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}
 		var easelTable = datastore.getTable('easel');
 		var record = easelTable.get('this');
+		if (!record) {
+			return done();
+		}
 		_this.x = record.get('x');
 		_this.y = record.get('y');
 		_this.scale = record.get('scale');

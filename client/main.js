@@ -1,6 +1,6 @@
 define(['easel','dropbox'],function(Easel) {
 
-var client// = new Dropbox.Client({key: '3d684nqsmfta8ur'});
+var client = new Dropbox.Client({key: '3d684nqsmfta8ur'});
 authenticate(client);
 
 
@@ -71,6 +71,7 @@ function initialize(client) {
 
 function authenticate(client) {
 	if (!client) {
+		console.log('using localstorage');
 		return initialize();
 	}
 
@@ -82,7 +83,8 @@ function authenticate(client) {
 	});
 
 	if (client.isAuthenticated()) {
-		
+		console.log('using datastore api');
+		initialize(client);
 	} else {
 		client.authenticate();
 	}
