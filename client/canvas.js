@@ -19,9 +19,11 @@ var debug = true;
 var resolutionScale = 1;
 var dirty = {};
 
-function Canvas(width, height, data) {
+function Canvas(width, height, data, col, row) {
 	this.width = width;
 	this.height = height;
+	this.col = col;
+	this.row = row;
 	this.scale = 1;
 	this.points = [];
 
@@ -77,10 +79,12 @@ Canvas.prototype.init = function() {
 			
 			for (var i = 0; i < segments.length; i++) {
 				var segment = segments[i].split(',');
-				this.points.push(segment);
+				var points = [];
 				context.beginPath();
 				var x = parseFloat(segment[0]);
 				var y = parseFloat(segment[1]);
+				points.push(x);
+				points.push(y);
 				if (segment.length == 2) {
 					context.arc(x, y, THICKNESS / 2, 0, 2 * Math.PI, false);
 					context.fillStyle = COLOR;
@@ -91,9 +95,12 @@ Canvas.prototype.init = function() {
 						x = parseFloat(segment[j]);
 						y = parseFloat(segment[j+1]);
 						context.lineTo(x, y);
+						points.push(x);
+						points.push(y);
 					}
 					context.stroke();
 				}
+				this.points.push(points);
 			}
 
 			this.data = null;
@@ -133,13 +140,13 @@ Canvas.prototype.release = function() {
 	canvas.height = 1;
 	//canvas.width = canvas.width;
 	this.canvas = null;
+	this.points = [];
 	return this.data;
 };
 
 Canvas.prototype.toData = function() {
 	if (this.points.length > 0) {
-		var data = '';
-		data += this.points[0].join(',');
+		var data = this.points[0].join(',');
 		for (var i = 1; i < this.points.length; i++) {
 			data += '_' + this.points[i].join(',');
 		}

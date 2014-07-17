@@ -46,10 +46,8 @@ Easel.prototype.initCell = function(col, row, data) {
 		if (!data) {
 			data = this.getData(col,row);
 		}
-		cell = new Canvas(this.stage.width, this.stage.height, data);
+		cell = new Canvas(this.stage.width, this.stage.height, data, col, row);
 		this.grid[row][col] = cell;
-		cell.col = col;
-		cell.row = row;
 		this.active.push(cell);
 	}
 	
@@ -479,7 +477,7 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('_0.1',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('_0.3',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}
