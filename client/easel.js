@@ -27,7 +27,9 @@ function Easel(width, height, client) {
 		maxy: (1 / minZoom / 2 + extend) * height
 	};
 
-	this.datastoreManager = client.getDatastoreManager();
+	if (client) {
+		this.datastoreManager = client.getDatastoreManager();
+	}
 }
 
 Easel.prototype.initCell = function(col, row, data, callback) {
@@ -354,6 +356,18 @@ Easel.prototype.replaceRecord = function(table, id, values) {
 };
 
 Easel.prototype.save = function() {
+	if (!this.datastore) {
+		for (var i = 0; i < this.active.length; i++) {
+			var canvas = this.active[i];
+			var key = canvas.col + '_' + canvas.row;
+			localStorage.setItem(key, canvas.release());
+		}
+		localStorage.setItem('x', this.x);
+		localStorage.setItem('y', this.y);
+		localStorage.setItem('scale', this.scale);
+		return;
+	}
+
 	var cellTable = this.datastore.getTable('cells');
 	for (var i = 0; i < this.active.length; i++) {
 		var cell = this.active[i];
@@ -373,6 +387,41 @@ Easel.prototype.save = function() {
 };
 
 Easel.prototype.load = function(done) {
+	if (!this.datastoreManager) {
+		this.x = parseFloat(localStorage.getItem('x')) || 0;
+		this.y = parseFloat(localStorage.getItem('y')) || 0;
+		this.scale = parseFloat(localStorage.getItem('scale')) || 1;
+
+		var v = this.getViewport();
+		var pending = 0;
+
+		var hasData = false;
+		var finished = false;
+		var check = function() {
+			pending--;
+			if (pending == 0 && finished) {
+				done(hasData);
+			}
+		};
+
+		for (var row = v.minrow; row < v.minrow + v.rows; row++) {
+			for (var col = v.mincol; col < v.mincol + v.cols; col++) {
+				var data = localStorage.getItem(col + '_' + row);
+				if (data) {
+					hasData = true;
+					pending++;
+					this.initCell(col, row, data, check);
+				} else {
+					this.initCell(col, row);
+				}
+			}
+		}
+		finished = true;
+		if (pending == 0) {
+			done(hasData);
+		}
+		return;
+	}
 	var _this = this;
 	this.datastoreManager.openOrCreateDatastore('hackweek',function (error, datastore) {
 		if (error) {

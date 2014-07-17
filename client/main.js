@@ -1,7 +1,7 @@
 define(['easel','dropbox'],function(Easel) {
 
-var client = new Dropbox.Client({key: '3d684nqsmfta8ur'});
-authenticate();
+var client// = new Dropbox.Client({key: '3d684nqsmfta8ur'});
+authenticate(client);
 
 
 function getTouch(e) {
@@ -56,7 +56,23 @@ function getDistance(touch) {
 }
 
 var stage;
-function authenticate() {
+function initialize(client) {
+	stage = new Easel(window.innerWidth, window.innerHeight, client);
+	stage.load(function(numLoaded) {
+		if (!numLoaded) {
+			stage.initCell(0,0);
+			console.log('initialize blank stage');
+		} else {
+			console.log('stage loaded with data');
+		}
+		run();
+	});
+}
+
+function authenticate(client) {
+	if (!client) {
+		return initialize();
+	}
 
 	// Try to finish OAuth authorization.
 	client.authenticate({interactive: false}, function (error) {
@@ -66,16 +82,7 @@ function authenticate() {
 	});
 
 	if (client.isAuthenticated()) {
-		stage = new Easel(window.innerWidth, window.innerHeight, client);
-		stage.load(function(numLoaded) {
-			if (!numLoaded) {
-				stage.initCell(0,0);
-				console.log('initialize blank stage');
-			} else {
-				console.log('stage loaded with data');
-			}
-			run();
-		});
+		
 	} else {
 		client.authenticate();
 	}
