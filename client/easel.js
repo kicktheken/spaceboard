@@ -545,11 +545,16 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('_dd5',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('_dd6',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}
 		_this.datastore = datastore;
+		datastore.recordsChanged.addListener(function (event) {
+			if (!event.isLocal()) {
+				_this.handleRemoteChanges(event.affectedRecordsForTable('cells'));
+			}
+		});
 
 		var easelTable = datastore.getTable('easel');
 		var record = easelTable.get('this');
@@ -580,6 +585,15 @@ Easel.prototype.load = function(done) {
 
 		done(numCellsWithData);
 	});
+};
+
+Easel.prototype.handleRemoteChanges = function(records) {
+	for (var i = 0; i < records.length; i++) {
+		var col = records[i].get('col');
+		var row = records[i].get('row');
+		var data = records[i].get('data');
+		this.initCell(col,row).merge(data);
+	}
 };
 
 return Easel;

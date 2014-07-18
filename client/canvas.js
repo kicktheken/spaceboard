@@ -105,20 +105,41 @@ Canvas.prototype.resize = function(width, height) {
 };
 
 Canvas.prototype.load = function(data) {
-	if (!data) {
-		this.canvas.width = this.canvas.width;
-		data = this.toData();
-	}
-	var context = this.canvas.getContext('2d');
 	this.clear();
+
+	var context = this.canvas.getContext('2d');
+	context.lineWidth = THICKNESS;
+	context.lineCap = 'round';
+	context.strokeStyle = COLOR;
+	if (!data) {
+		if (this.points.length > 0) {
+			for (var i = 1; i < this.points.length; i++) {
+				context.beginPath();
+				var segment = this.points[i];
+				var x = segment[0];
+				var y = segment[1];
+				if (segment.length == 2) {
+					context.arc(x, y, THICKNESS / 2, 0, 2 * Math.PI, false);
+					context.fillStyle = COLOR;
+					context.fill();
+				} else {
+					context.moveTo(x, y);
+					for (var j = 2; j < segment.length; j += 2) {
+						x = segment[j];
+						y = segment[j+1];
+						context.lineTo(x, y);
+					}
+					context.stroke();
+				}
+			}
+		} else {
+			data = this.toData();
+		}
+	}
 	if (!data) {
 		return;
 	}
 	var segments = data.split('_');
-
-	context.lineWidth = THICKNESS;
-	context.lineCap = 'round';
-	context.strokeStyle = COLOR;
 	this.points = [];
 	
 	for (var i = 0; i < segments.length; i++) {
@@ -146,6 +167,33 @@ Canvas.prototype.load = function(data) {
 		}
 		this.points.push(points);
 	}
+};
+
+Canvas.prototype.merge = function(data) {
+	if (!data) {
+		return;
+	}
+	if (this.points.length == 0) {
+		return this.load(data);
+	}
+	var segments = data.split('_');
+	
+	for (var i = 0; i < segments.length; i++) {
+		var segment = segments[i].split(',');
+		var remoteMerged = false;
+		var toInsert = [];
+		for (var j = 0; j < segment.length; j++) {
+			var n = parseFloat(segment[j]);
+			if (i - 1 >= this.points.length || this.points[i].length != segments.length || this.points[i][j] != n) {
+				remoteMerged = true;
+			}
+			toInsert.push(n);
+		}
+		if (remoteMerged) {
+			this.points.splice(i, 0, toInsert);
+		}
+	}
+	this.load();
 };
 
 Canvas.prototype.release = function() {
