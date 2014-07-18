@@ -94,8 +94,8 @@ Easel.prototype.updateBounds = function(x,y) {
 };
 
 Easel.prototype.translateCoords = function(x,y) {
-	x = (x - this.x) / this.scale;
-	y = (y - this.y) / this.scale;
+	x = (x - this.x / Canvas.getScale()) / this.scale;
+	y = (y - this.y / Canvas.getScale()) / this.scale;
 
 	var col = Math.floor(x / this.stage.width);
 	var row = Math.floor(y / this.stage.height);
@@ -219,30 +219,34 @@ Easel.prototype.getViewport = function() {
 	var zoneWidth = this.stage.width * this.scale;
 	var zoneHeight = this.stage.height * this.scale;
 
-	var mincol = Math.floor(-this.x / zoneWidth);
+	var mincol = Math.floor(-this.x / zoneWidth / Canvas.getScale());
 	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
 
-	var minrow = Math.floor(-this.y / zoneHeight);
+	var minrow = Math.floor(-this.y / zoneHeight / Canvas.getScale());
 	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
 	return { mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
 };
 
 Easel.prototype.translate = function(dx, dy) {
+	dx *= Canvas.getScale();
+	dy *= Canvas.getScale();
 	this.dx = dx;
 	this.dy = dy;
 	this.x += dx;
 	this.y += dy;
 
-	if (-this.x < (this.bounds.minx + this.stage.width / 2) * this.scale ) {
-		this.x = -(this.bounds.minx + this.stage.width / 2) * this.scale;
-	} else if (-this.x > this.bounds.maxx * this.scale - this.stage.width * (1 - this.scale / 2)) {
-		this.x = -(this.bounds.maxx * this.scale - this.stage.width * (1 - this.scale / 2));
+	var scale = this.scale * Canvas.getScale();
+	var sscale = (1 - this.scale / 2) * Canvas.getScale();
+	if (-this.x < (this.bounds.minx + this.stage.width / 2) * scale ) {
+		this.x = -(this.bounds.minx + this.stage.width / 2) * scale;
+	} else if (-this.x > this.bounds.maxx * scale - this.stage.width * sscale) {
+		this.x = -(this.bounds.maxx * scale - this.stage.width * sscale);
 	}
-	if (-this.y < (this.bounds.miny + this.stage.height / 2) * this.scale) {
-		this.y = -(this.bounds.miny + this.stage.height / 2) * this.scale;
-	} else if (-this.y > this.bounds.maxy * this.scale - this.stage.height * (1 - this.scale / 2)) {
-		this.y = -(this.bounds.maxy * this.scale - this.stage.height * (1 - this.scale / 2));
+	if (-this.y < (this.bounds.miny + this.stage.height / 2) * scale) {
+		this.y = -(this.bounds.miny + this.stage.height / 2) * scale;
+	} else if (-this.y > this.bounds.maxy * scale - this.stage.height * sscale) {
+		this.y = -(this.bounds.maxy * scale - this.stage.height * sscale);
 	}
 
 	var v = this.getViewport();
@@ -262,9 +266,10 @@ Easel.prototype.zoom = function(dist, x, y) {
 		newscale = minZoom;
 	}
 
+
 	var scale = (newscale - this.scale) / this.scale;
-	this.x -= scale * (x - this.x);
-	this.y -= scale * (y - this.y);
+	this.x -= scale * (x * Canvas.getScale() - this.x);
+	this.y -= scale * (y * Canvas.getScale() - this.y);
 	this.scale = newscale;
 	this.dist = dist;
 };
@@ -340,8 +345,8 @@ Easel.prototype.update = function() {
 		this.erase(this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 
-	var zoneWidth = this.stage.width * this.scale;
-	var zoneHeight = this.stage.height * this.scale;
+	var zoneWidth = this.stage.width * this.scale * Canvas.getScale();
+	var zoneHeight = this.stage.height * this.scale * Canvas.getScale();;
 	var v = this.getViewport();
 	
 	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
@@ -359,7 +364,11 @@ Easel.prototype.update = function() {
 	}
 
 	if (this.eraser) {
-		this.stage.drawCircle('rgb(255,200,200)', this.eraser.x, this.eraser.y, this.eraser.radius);
+		this.stage.drawCircle('rgb(255,200,200)',
+			this.eraser.x * Canvas.getScale(),
+			this.eraser.y * Canvas.getScale(),
+			this.eraser.radius * Canvas.getScale()
+		);
 	}
 
 	if (bPooling) {
@@ -487,7 +496,7 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('_0.5',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('_dd3',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}

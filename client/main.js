@@ -166,12 +166,14 @@ function run() {
 			if (ffVersion > 16) { // deltaX only works on FF 17.0+
 				initMouseScroll();
 				window.addWheelListener(document, function(e) {
+					e.preventDefault();
 					stage.translate(e.deltaX, e.deltaY);
 				});
 			}
 		} else if (/webkit/i.test(navigator.userAgent)) {
 			initMouseScroll();
 			window.addWheelListener(document, function(e) {
+				e.preventDefault();
 				stage.translate(e.deltaX * 20, e.deltaY * 20);
 			});
 		}

@@ -13,9 +13,9 @@ Number.prototype.floor = function() {
 
 COLOR = 'rgb(0,80,150)';
 BGCOLOR = 'rgb(245,240,225)';
-THICKNESS = 6;
+THICKNESS = 10;
 var pool = [];
-var retina = false;
+var retina = true;
 var resolutionScale = 1;
 var dirty = {};
 
@@ -29,10 +29,14 @@ function Canvas(width, height, data, col, row) {
 
 	if (data == true) {
 		var canvas = document.getElementById('canvas');
-		canvas.retinaResolutionEnabled = retina;
+		canvas.retinaResolutionEnabled = retina; // this is only for Ejecta
 		canvas.width = width;
 		canvas.height = height;
 		setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
+		if (retina) {
+			canvas.width = canvas.width * Canvas.getScale();
+			canvas.height = canvas.height * Canvas.getScale();
+		}
 		this.canvas = canvas;
 	} else if (data) {
 		this.data = data;
@@ -58,6 +62,12 @@ Canvas.flushAll = function(callback) {
 	dirty = {};
 };
 
+Canvas.getScale = function() {
+	return resolutionScale * (
+		retina && window.devicePixelRatio > 1 ? window.devicePixelRatio : 1
+	);
+};
+
 Canvas.prototype.init = function() {
 	if (!this.canvas) {
 		var canvas = this.canvas = this.initCanvas();
@@ -78,7 +88,7 @@ Canvas.prototype.initCanvas = function() {
 		canvas = document.createElement('canvas');
 		canvas.retinaResolutionEnabled = retina;
 	}
-	this.scale = resolutionScale;
+	this.scale = Canvas.getScale();
 	canvas.width = this.width * this.scale;
 	canvas.height = this.height * this.scale;
 	this.canvas = canvas;
@@ -236,7 +246,7 @@ Canvas.prototype.clear = function() {
 	this.canvas.width = this.canvas.width;
 	var context = this.canvas.getContext('2d');
 	context.fillStyle = BGCOLOR;
-	context.fillRect(0,0,this.width,this.height);
+	context.fillRect(0,0,this.canvas.width,this.canvas.height);
 	return this;
 };
 
