@@ -371,8 +371,12 @@ Easel.prototype.update = function() {
 		);
 	}
 
+	//
+	// draw number labels on grids
+	//
+	var glyphColor = 'rgb(200,215,225)';
 	var context = this.stage.canvas.getContext("2d");
-	context.fillStyle = 'rgb(200,215,225)';
+	context.fillStyle = glyphColor;
 	var fontsize = (this.stage.width/10 * this.scale).floor();
 	context.font = fontsize + "px Arial";
 
@@ -382,6 +386,30 @@ Easel.prototype.update = function() {
 	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
 		context.fillText(-row, fontsize / 5, this.y + (row + .5) * zoneHeight - fontsize / 5);
 	}
+
+	//
+	// draw zoom indicator
+	//
+	var trueWidth = this.stage.canvas.width;
+	context.strokeStyle = GRIDCOLOR;
+	context.lineWidth = 5;
+	context.lineCap = 'square';
+    context.beginPath();
+	context.moveTo(trueWidth -90, 30);
+	context.lineTo(trueWidth -30, 30);
+	context.moveTo(trueWidth -90, 150);
+	context.lineTo(trueWidth -30, 150);
+	context.moveTo(trueWidth -60, 30);
+	context.lineTo(trueWidth -60, 150);
+    context.stroke();
+
+	context.strokeStyle = glyphColor;
+	context.lineWidth = 8;
+	var scaleToY = 30 + 120 * (this.scale - minZoom) / (maxZoom - minZoom);
+	context.beginPath();
+	context.moveTo(trueWidth -90, scaleToY);
+	context.lineTo(trueWidth -30, scaleToY);
+	context.stroke();
 
 	if (bPooling) {
 		for (var i = this.active.length - 1; i >= 0; i--) {
