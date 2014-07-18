@@ -97,6 +97,13 @@ Canvas.prototype.initCanvas = function() {
 	return canvas;
 };
 
+Canvas.prototype.resize = function(width, height) {
+	this.canvas.width = width * Canvas.getScale();
+	this.canvas.height = height * Canvas.getScale();
+	this.width = width;
+	this.height = height;
+};
+
 Canvas.prototype.load = function(data) {
 	if (!data) {
 		this.canvas.width = this.canvas.width;

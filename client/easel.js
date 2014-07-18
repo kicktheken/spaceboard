@@ -63,6 +63,10 @@ Easel.prototype.initCells = function(startcol, startrow, cols, rows) {
 	}
 };
 
+Easel.prototype.resize = function(width, height) {
+	this.stage.resize(width,height);
+};
+
 Easel.prototype.getData = function(col, row) {
 	var data;
 	if (this.datastore) {
@@ -228,9 +232,7 @@ Easel.prototype.getViewport = function() {
 	var minrow = Math.floor(-this.y / zoneHeight / Canvas.getScale());
 	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
-	var ret = { mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
-	console.log(ret);
-	return ret;
+	return { mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
 };
 
 Easel.prototype.translate = function(dx, dy) {

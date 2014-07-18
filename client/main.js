@@ -179,6 +179,13 @@ function run() {
 		}
 	}
 
+	var onResize = function(e) {
+		stage.resize(window.innerWidth, window.innerHeight);
+	};
+
+	window.onresize = onResize;
+	window.addEventListener("orientationchange", onResize, true);
+
 	(function animloop(){
 		requestAnimationFrame(animloop);
 		if (touchRespond) {
