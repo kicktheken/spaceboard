@@ -12,6 +12,7 @@ Number.prototype.floor = function() {
 };
 
 COLOR = 'rgb(0,80,150)';
+BGCOLOR = 'rgb(245,240,225)';
 THICKNESS = 6;
 var pool = [];
 var retina = false;
@@ -234,7 +235,7 @@ Canvas.prototype.drawCanvas = function(canvas, x, y, width, height) {
 Canvas.prototype.clear = function() {
 	this.canvas.width = this.canvas.width;
 	var context = this.canvas.getContext('2d');
-	context.fillStyle = 'rgb(245,240,225)';
+	context.fillStyle = BGCOLOR;
 	context.fillRect(0,0,this.width,this.height);
 	return this;
 };
@@ -298,12 +299,7 @@ Canvas.prototype.clearCircle = function(x, y, radius) {
 
 	var context = this.canvas.getContext('2d');
 	context.save();
-	if (debug) {
-		context.fillStyle = this.color;
-	} else {
-		context.fillStyle = 'white';
-		context.globalCompositeOperation = 'destination-out';
-	}
+	context.fillStyle = BGCOLOR;
     context.beginPath();
     context.arc(x, y, radius, 0, 2 * Math.PI, false);
     context.fill();
