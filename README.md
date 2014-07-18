@@ -15,9 +15,9 @@ Made for Dropbox Hack Week 2014.
 
 ### How to build for native iOS app (BROKEN) ###
 
-1. Generate minified javascript
+1. Generate minified javascript file
 
-    $ npm install
-    $ grunt
+        $ npm install
+        $ grunt
 
 2. Compile from Xcode project `ios` folder
