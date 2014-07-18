@@ -384,6 +384,21 @@ Easel.prototype.replaceRecord = function(table, id, values) {
 	});
 };
 
+Easel.prototype.flushMeta = function() {
+	if (this.datastore) {
+		var easelTable = this.datastore.getTable('easel');
+		this.replaceRecord(easelTable, 'this',{
+			x: this.x,
+			y: this.y,
+			scale: this.scale,
+			minx: this.bounds.minx,
+			miny: this.bounds.miny,
+			maxx: this.bounds.maxx,
+			maxy: this.bounds.maxy
+		});
+	}
+};
+
 Easel.prototype.flushDirty = function() {
 	var _this = this;
 	Canvas.flushAll(function(cell) {
@@ -401,6 +416,8 @@ Easel.prototype.flushDirty = function() {
 				}
 			}
 	});
+
+	this.flushMeta();
 };
 
 Easel.prototype.save = function() {
@@ -436,16 +453,7 @@ Easel.prototype.save = function() {
 		}
 	}
 
-	var easelTable = this.datastore.getTable('easel');
-	this.replaceRecord(easelTable, 'this',{
-		x: this.x,
-		y: this.y,
-		scale: this.scale,
-		minx: this.bounds.minx,
-		miny: this.bounds.miny,
-		maxx: this.bounds.maxx,
-		maxy: this.bounds.maxy
-	});
+	this.flushMeta();
 };
 
 Easel.prototype.load = function(done) {
@@ -477,7 +485,7 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('_0.3',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('_0.5',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}

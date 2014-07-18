@@ -98,11 +98,6 @@ function run() {
 		stage.stopInertiaScroll();
 		var touch = getTouch(e);
 		hasMoved = false;
-		touchRespond = function() {
-			if (touch.length > 2) {
-				setEraser(touch);
-			}
-		};
 		prevTouch = touch
 	};
 
@@ -129,21 +124,19 @@ function run() {
 
 	var touchEnd = function(e) {
 		e.preventDefault();
-		if (prevTouch && prevTouch.length == 1) {
-			stage.flushDirty();
-			if (!hasMoved) {
-				var touch = prevTouch;
-				touchRespond = function() {
-					stage.dotDraw(touch.x, touch.y);
-				};
-			}
-		} else {
-			touchRespond = function() {
+		var touch = prevTouch;
+		touchRespond = function() {
+			if (touch && touch.length == 1) {
+				if (!hasMoved) {
+					stage.drawDot(touch.x, touch.y);
+				}
+			} else {
 				stage.stopZoom();
 				stage.unsetEraser();
 				stage.startInertiaScroll();
-			};
-		}
+			}
+			stage.flushDirty();
+		};
 		prevTouch = null;
 	};
 

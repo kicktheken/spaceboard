@@ -55,6 +55,7 @@ function Canvas(width, height, data, col, row) {
 Canvas.flushAll = function(callback) {
 	Object.keys(dirty).forEach(function(key) {
 		callback(dirty[key]);
+		dirty[key].load();
 		dirty[key].dirty = false;
 	});
 	dirty = {};
@@ -70,41 +71,8 @@ Canvas.prototype.init = function() {
 			context.fillRect(0,0,this.width,this.height);
 		}
 		if (this.data) {
-			var context = canvas.getContext('2d');
-			var segments = this.data.split('_');
-
-			context.lineWidth = THICKNESS;
-			context.lineCap = 'round';
-			context.strokeStyle = COLOR;
-			
-			for (var i = 0; i < segments.length; i++) {
-				var segment = segments[i].split(',');
-				var points = [];
-				context.beginPath();
-				var x = parseFloat(segment[0]);
-				var y = parseFloat(segment[1]);
-				points.push(x);
-				points.push(y);
-				if (segment.length == 2) {
-					context.arc(x, y, THICKNESS / 2, 0, 2 * Math.PI, false);
-					context.fillStyle = COLOR;
-					context.fill();
-				} else {
-					context.moveTo(x, y);
-					for (var j = 2; j < segment.length; j += 2) {
-						x = parseFloat(segment[j]);
-						y = parseFloat(segment[j+1]);
-						context.lineTo(x, y);
-						points.push(x);
-						points.push(y);
-					}
-					context.stroke();
-				}
-				this.points.push(points);
-			}
-
+			this.load(this.data);
 			this.data = null;
-		} else {
 		}
 		return canvas;
 	}
@@ -124,6 +92,50 @@ Canvas.prototype.initCanvas = function() {
 	this.canvas = canvas;
 	setVendorAttribute(canvas.getContext('2d'), 'imageSmoothingEnabled', false);
 	return canvas;
+};
+
+Canvas.prototype.load = function(data) {
+	if (!data) {
+		this.canvas.width = this.canvas.width;
+		data = this.toData();
+	}
+	var context = this.canvas.getContext('2d');
+	if (debug) {
+		context.fillStyle = this.color;
+		context.fillRect(0,0,this.width,this.height);
+	}
+	var segments = data.split('_');
+
+	context.lineWidth = THICKNESS;
+	context.lineCap = 'round';
+	context.strokeStyle = COLOR;
+	this.points = [];
+	
+	for (var i = 0; i < segments.length; i++) {
+		var segment = segments[i].split(',');
+		var points = [];
+		context.beginPath();
+		var x = parseFloat(segment[0]);
+		var y = parseFloat(segment[1]);
+		points.push(x);
+		points.push(y);
+		if (segment.length == 2) {
+			context.arc(x, y, THICKNESS / 2, 0, 2 * Math.PI, false);
+			context.fillStyle = COLOR;
+			context.fill();
+		} else {
+			context.moveTo(x, y);
+			for (var j = 2; j < segment.length; j += 2) {
+				x = parseFloat(segment[j]);
+				y = parseFloat(segment[j+1]);
+				context.lineTo(x, y);
+				points.push(x);
+				points.push(y);
+			}
+			context.stroke();
+		}
+		this.points.push(points);
+	}
 };
 
 Canvas.prototype.release = function() {
@@ -155,8 +167,11 @@ Canvas.prototype.toData = function() {
 };
 
 Canvas.prototype.dirtyThis = function() {
-	dirty[this.col + '_'+ this.row] = this;
-	this.dirty = true;
+	if (typeof this.col === 'number' && typeof this.row === 'number') {
+		var key = this.col + '_'+ this.row;
+		dirty[key] = this;
+		this.dirty = true;
+	}
 };
 
 Canvas.prototype.drawCircle = function(color, x, y, radius) {
@@ -230,6 +245,43 @@ Canvas.prototype.clearCircle = function(x, y, radius) {
 	x *= this.scale;
 	y *= this.scale;
 	radius *= this.scale;
+
+	var isErased = false;
+	for (var i = this.points.length - 1; i >= 0; i--) {
+		var segment = this.points[i];
+		if (segment.length == 2) {
+		} else {
+			for (var j = segment.length - 4; j >= 0; j-=2) {
+				var x1 = segment[j];
+				var y1 = segment[j+1];
+				var x2 = segment[j+2];
+				var y2 = segment[j+3];
+
+				var dx = x2 - x1;
+				var dy = y2 - y1;
+				var cx = x - x1;
+				var cy = y - y1;
+				var cross = dx*cy - dy*cx;
+				if (cross * cross <= radius * radius * (dx*dx + dy*dy)) {
+					// start point intersects circle
+					if (cx * cx + cy * cy < radius * radius) {
+						segment.splice(j,4);
+						j-=2;
+					} else {
+						segment.splice(j+2,2);
+					}
+					isErased = true;
+				}
+			}
+			if (segment.length <= 2) {
+				this.points.splice(i,1);
+			}
+		}
+	}
+	if (isErased) {
+		this.dirtyThis();
+	}
+
 	var context = this.canvas.getContext('2d');
 	context.save();
 	if (debug) {
