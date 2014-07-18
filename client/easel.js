@@ -224,15 +224,15 @@ Easel.prototype.getViewport = function() {
 	var zoneWidth = quadSize.width * this.scale;
 	var zoneHeight = quadSize.height * this.scale;
 
-	var xoffset = -this.x //- this.stage.width + quadSize.width;
-	var mincol = Math.floor(xoffset / zoneWidth / Canvas.getScale());
+	var x = this.x + (this.stage.width - quadSize.width) * this.scale;
+	var mincol = Math.floor(-x / zoneWidth / Canvas.getScale());
 	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
 
-	var yoffset = -this.y //- this.stage.height + quadSize.height;
-	var minrow = Math.floor(-this.y / zoneHeight / Canvas.getScale());
+	var y = this.y + (this.stage.height - quadSize.height) * this.scale;
+	var minrow = Math.floor(-y / zoneHeight / Canvas.getScale());
 	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
-	return { mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
+	return { x: x, y: y, mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
 };
 
 Easel.prototype.translate = function(dx, dy) {
@@ -356,15 +356,13 @@ Easel.prototype.update = function() {
 	var zoneHeight = quadSize.height * this.scale * Canvas.getScale();;
 	var v = this.getViewport();
 	
-	var x = this.x + (this.stage.width - quadSize.width) * this.scale;
-	var y = this.y + (this.stage.height - quadSize.height) * this.scale;
 	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
 		for (var col = v.mincol; col < v.mincol + v.cols; col++) {
 			var cell = this.initCell(col,row);
 			this.stage.drawCanvas(
 				cell,
-				x + col * zoneWidth,
-				y + row * zoneHeight,
+				v.x + col * zoneWidth,
+				v.y + row * zoneHeight,
 				zoneWidth,
 				zoneHeight
 			);
@@ -390,10 +388,10 @@ Easel.prototype.update = function() {
 	context.font = fontsize + "px Arial";
 
 	for (var col = v.mincol; col < v.mincol + v.cols; col++) {
-		context.fillText(col, x + (col + .5) * zoneWidth + fontsize / 5, fontsize);
+		context.fillText(col, v.x + (col + .5) * zoneWidth + fontsize / 5, fontsize);
 	}
 	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
-		context.fillText(-row, fontsize / 5, y + (row + .5) * zoneHeight - fontsize / 5);
+		context.fillText(-row, fontsize / 5, v.y + (row + .5) * zoneHeight - fontsize / 5);
 	}
 
 	//
