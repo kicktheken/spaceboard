@@ -104,41 +104,25 @@ Canvas.prototype.resize = function(width, height) {
 	this.height = height;
 };
 
-Canvas.prototype.load = function(data) {
+Canvas.prototype.unload = function() {
+	this.points = [];
 	this.clear();
+};
 
-	var context = this.canvas.getContext('2d');
-	context.lineWidth = THICKNESS;
-	context.lineCap = 'round';
-	context.strokeStyle = COLOR;
+Canvas.prototype.load = function(data) {
 	if (!data) {
-		if (this.points.length > 0) {
-			for (var i = 1; i < this.points.length; i++) {
-				context.beginPath();
-				var segment = this.points[i];
-				var x = segment[0];
-				var y = segment[1];
-				if (segment.length == 2) {
-					context.arc(x, y, THICKNESS / 2, 0, 2 * Math.PI, false);
-					context.fillStyle = COLOR;
-					context.fill();
-				} else {
-					context.moveTo(x, y);
-					for (var j = 2; j < segment.length; j += 2) {
-						x = segment[j];
-						y = segment[j+1];
-						context.lineTo(x, y);
-					}
-					context.stroke();
-				}
-			}
-		} else {
-			data = this.toData();
-		}
+		this.canvas.width = this.canvas.width;
+		data = this.toData();
 	}
+	var context = this.canvas.getContext('2d');
+	this.clear();
 	if (!data) {
 		return;
 	}
+
+	context.lineWidth = THICKNESS;
+	context.lineCap = 'round';
+	context.strokeStyle = COLOR;
 	var segments = data.split('_');
 	this.points = [];
 	
@@ -173,7 +157,7 @@ Canvas.prototype.merge = function(data) {
 	if (!data) {
 		return;
 	}
-	if (this.points.length == 0) {
+	if (this.points.length == 0 || !this.dirty) {
 		return this.load(data);
 	}
 	var segments = data.split('_');
@@ -193,7 +177,35 @@ Canvas.prototype.merge = function(data) {
 			this.points.splice(i, 0, toInsert);
 		}
 	}
-	this.load();
+	
+	this.clear();
+
+	var context = this.canvas.getContext('2d');
+	context.lineWidth = THICKNESS;
+	context.lineCap = 'round';
+	context.strokeStyle = COLOR;
+
+	for (var i = 1; i < this.points.length; i++) {
+		context.beginPath();
+		var segment = this.points[i];
+		var x = segment[0];
+		var y = segment[1];
+		if (segment.length == 2) {
+			context.arc(x, y, THICKNESS / 2, 0, 2 * Math.PI, false);
+			context.fillStyle = COLOR;
+			context.fill();
+		} else {
+			context.moveTo(x, y);
+			for (var j = 2; j < segment.length; j += 2) {
+				x = segment[j];
+				y = segment[j+1];
+				context.lineTo(x, y);
+			}
+			context.stroke();
+		}
+	}
+	
+	
 };
 
 Canvas.prototype.release = function() {

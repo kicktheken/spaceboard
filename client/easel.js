@@ -404,17 +404,18 @@ Easel.prototype.update = function() {
 	context.lineWidth = 5;
 	context.lineCap = 'square';
     context.beginPath();
-	context.moveTo(trueWidth -90, 30);
-	context.lineTo(trueWidth -30, 30);
-	context.moveTo(trueWidth -90, 150);
-	context.lineTo(trueWidth -30, 150);
-	context.moveTo(trueWidth -60, 30);
-	context.lineTo(trueWidth -60, 150);
+	var top = 60;
+	context.moveTo(trueWidth -90, top);
+	context.lineTo(trueWidth -30, top);
+	context.moveTo(trueWidth -90, top+120);
+	context.lineTo(trueWidth -30, top+120);
+	context.moveTo(trueWidth -60, top);
+	context.lineTo(trueWidth -60, top+120);
     context.stroke();
 
 	context.strokeStyle = glyphColor;
 	context.lineWidth = 8;
-	var scaleToY = 30 + 120 * (this.scale - minZoom) / (maxZoom - minZoom);
+	var scaleToY = top + 120 * (this.scale - minZoom) / (maxZoom - minZoom);
 	context.beginPath();
 	context.moveTo(trueWidth -90, scaleToY);
 	context.lineTo(trueWidth -30, scaleToY);
@@ -545,7 +546,7 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('_dd6',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('_dd10',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}
@@ -589,10 +590,18 @@ Easel.prototype.load = function(done) {
 
 Easel.prototype.handleRemoteChanges = function(records) {
 	for (var i = 0; i < records.length; i++) {
-		var col = records[i].get('col');
-		var row = records[i].get('row');
-		var data = records[i].get('data');
-		this.initCell(col,row).merge(data);
+		if (records[i].isDeleted()) {
+			var id = records[i].getId();
+			var s = id.split('_');
+			var col = parseInt(s[0]);
+			var row = parseInt(s[1]);
+			this.initCell(col,row).unload();
+		} else {
+			var col = records[i].get('col');
+			var row = records[i].get('row');
+			var data = records[i].get('data');
+			this.initCell(col,row).merge(data);
+		}
 	}
 };
 
