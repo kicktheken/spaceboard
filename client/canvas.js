@@ -13,6 +13,7 @@ Number.prototype.floor = function() {
 
 COLOR = 'rgb(0,80,150)';
 BGCOLOR = 'rgb(245,240,225)';
+GRIDCOLOR = 'rgb(220,230,240)';
 THICKNESS = 10;
 var pool = [];
 var retina = true;
@@ -248,7 +249,7 @@ Canvas.prototype.clear = function() {
 	context.fillStyle = BGCOLOR;
 	context.fillRect(0,0,width,height);
 
-	context.fillStyle = 'rgb(210,220,235)';
+	context.fillStyle = GRIDCOLOR;
 	context.fillRect(0, (height-THICKNESS)/2, width, THICKNESS);
 	context.fillRect((width-THICKNESS)/2, 0, THICKNESS, height);
 	return this;

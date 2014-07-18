@@ -371,6 +371,18 @@ Easel.prototype.update = function() {
 		);
 	}
 
+	var context = this.stage.canvas.getContext("2d");
+	context.fillStyle = 'rgb(200,215,225)';
+	var fontsize = (this.stage.width/10 * this.scale).floor();
+	context.font = fontsize + "px Arial";
+
+	for (var col = v.mincol; col < v.mincol + v.cols; col++) {
+		context.fillText(col, this.x + (col + .5) * zoneWidth + fontsize / 5, fontsize);
+	}
+	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
+		context.fillText(-row, fontsize / 5, this.y + (row + .5) * zoneHeight - fontsize / 5);
+	}
+
 	if (bPooling) {
 		for (var i = this.active.length - 1; i >= 0; i--) {
 			var cell = this.active[i];
