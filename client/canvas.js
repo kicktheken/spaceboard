@@ -269,6 +269,7 @@ Canvas.prototype.clearCircle = function(x, y, radius) {
 			// circle to dot intersection
 			if (dx * dx + dy * dy <= radius * radius) {
 				this.points.splice(i,1);
+				isErased = true;
 			}
 		} else {
 			for (var j = segment.length - 4; j >= 0; j-=2) {
@@ -294,13 +295,20 @@ Canvas.prototype.clearCircle = function(x, y, radius) {
 							}
 						}
 						j-=2;
+						isErased = true;
 					} else if ( // end point or middle intersects circle
 						(dx-cx)*(dx-cx) + (dy-cy)*(dy-cy) <= radius*radius ||
 						dx*cx + dy*cy >= 0 && dx*cx + dy*cy <= dx*dx + dy*dy
 					) {
 						segment.splice(j+2,2);
+						if (j+2 < segment.length) {
+							var newsegment = segment.splice(j+2, segment.length - j);
+							if (newsegment.length > 2) { // don't include dots
+								this.points.splice(i+1,0,newsegment);
+							}
+						}
+						isErased = true;
 					}
-					isErased = true;
 				}
 			}
 			if (segment.length <= 2) {
