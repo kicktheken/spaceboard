@@ -54,9 +54,12 @@ function Canvas(width, height, data, col, row) {
 
 Canvas.flushAll = function(callback) {
 	Object.keys(dirty).forEach(function(key) {
-		callback(dirty[key]);
-		dirty[key].load();
-		dirty[key].dirty = false;
+		var cell = dirty[key];
+		if (cell.canvas) {
+			callback(cell);
+			cell.load();
+			cell.dirty = false;
+		}
 	});
 	dirty = {};
 };
