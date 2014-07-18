@@ -151,8 +151,6 @@ Canvas.prototype.release = function() {
 	}
 	this.data = this.toData();
 	pool.push(canvas);
-	canvas.height = 1;
-	//canvas.width = canvas.width;
 	this.canvas = null;
 	this.points = [];
 	return this.data;
@@ -243,10 +241,16 @@ Canvas.prototype.drawCanvas = function(canvas, x, y, width, height) {
 };
 
 Canvas.prototype.clear = function() {
-	this.canvas.width = this.canvas.width;
+	var width = this.canvas.width;
+	var height = this.canvas.height;
+	this.canvas.width = width;
 	var context = this.canvas.getContext('2d');
 	context.fillStyle = BGCOLOR;
-	context.fillRect(0,0,this.canvas.width,this.canvas.height);
+	context.fillRect(0,0,width,height);
+
+	context.fillStyle = 'rgb(210,220,235)';
+	context.fillRect(0, (height-THICKNESS)/2, width, THICKNESS);
+	context.fillRect((width-THICKNESS)/2, 0, THICKNESS, height);
 	return this;
 };
 
@@ -303,7 +307,7 @@ Canvas.prototype.clearCircle = function(x, y, radius) {
 			}
 		}
 	}
-	if (isErased) {
+	if (isErased || this.points.length == 0) {
 		this.dirtyThis();
 	}
 
