@@ -115,7 +115,7 @@ function run() {
 					stage.translate(dx,dy);
 				} else {
 					hasMoved = true;
-					stage.lineDraw(prevTouch.x, prevTouch.y, touch.x, touch.y);
+					stage.drawLine(prevTouch.x, prevTouch.y, touch.x, touch.y);
 				}
 				prevTouch = touch
 			}

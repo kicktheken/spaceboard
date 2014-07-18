@@ -140,7 +140,7 @@ Easel.prototype.getZoneNeighbors = function(coords, threshold) {
 	return ret;
 };
 
-Easel.prototype._dotDraw = function(coords, offsetCol, offsetRow) {
+Easel.prototype._drawDot = function(coords, offsetCol, offsetRow) {
 	offsetCol = offsetCol || 0;
 	offsetRow = offsetRow || 0;
 	this.initCell(
@@ -154,18 +154,18 @@ Easel.prototype._dotDraw = function(coords, offsetCol, offsetRow) {
 	return this;
 };
 
-Easel.prototype.dotDraw = function(x,y) {
+Easel.prototype.drawDot = function(x,y) {
 	var coords = this.translateCoords(x,y);
 
 	var neighbors = this.getZoneNeighbors(coords, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
-		this._startDraw(coords, neighbors[i][0], neighbors[i][1]);
+		this._drawDot(coords, neighbors[i][0], neighbors[i][1]);
 	}
 
-	this._startDraw(coords);
+	this._drawDot(coords);
 };
 
-Easel.prototype._lineDraw = function(coords1, coords2, offsetCol, offsetRow) {
+Easel.prototype._drawLine = function(coords1, coords2, offsetCol, offsetRow) {
 	offsetCol = offsetCol || 0;
 	offsetRow = offsetRow || 0;
 	this.initCell(
@@ -180,7 +180,7 @@ Easel.prototype._lineDraw = function(coords1, coords2, offsetCol, offsetRow) {
 	);
 };
 
-Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
+Easel.prototype.drawLine = function(x1, y1, x2, y2) {
 	var coords1 = this.translateCoords(x1,y1);
 	var coords2 = this.translateCoords(x2,y2);
 
@@ -188,22 +188,22 @@ Easel.prototype.lineDraw = function(x1, y1, x2, y2) {
 	// but it should be performant enough that that doesn't matter
 	var neighbors = this.getZoneNeighbors(coords1, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
-		this._lineDraw(coords1, coords2, neighbors[i][0], neighbors[i][1]);
+		this._drawLine(coords1, coords2, neighbors[i][0], neighbors[i][1]);
 	}
-	this._lineDraw(coords1, coords2);
+	this._drawLine(coords1, coords2);
 
 
 	neighbors = this.getZoneNeighbors(coords2, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
-		this._lineDraw(coords2, coords1, neighbors[i][0], neighbors[i][1]);
+		this._drawLine(coords2, coords1, neighbors[i][0], neighbors[i][1]);
 	}
-	this._lineDraw(coords2, coords1);
+	this._drawLine(coords2, coords1);
 
 	var colDiff = coords2.col - coords1.col;
 	var rowDiff = coords2.row - coords1.row;
 	if (Math.abs(colDiff) == 1 && Math.abs(rowDiff) == 1) {
-		this._lineDraw(coords1, coords2, colDiff, 0);
-		this._lineDraw(coords1, coords2, 0, rowDiff);
+		this._drawLine(coords1, coords2, colDiff, 0);
+		this._drawLine(coords1, coords2, 0, rowDiff);
 	}
 };
 
