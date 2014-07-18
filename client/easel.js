@@ -360,19 +360,32 @@ Easel.prototype.update = function() {
 			if (cell.tick != this.ticks) {
 				this.active.splice(i,1);
 				var data = cell.release();
-				var key = cell.col + '_' + cell.row;
-				if (data) {
-					if (this.datastore) {
-						this.replaceRecord(this.datastore.getTable('cells'), key, {
-							col: cell.col,
-							row: cell.row,
-							data: data
-						});
-					} else {
-						localStorage.setItem(key, data);
-					}
-				}
+				this.updateCell(cell, data);
 			}
+		}
+	}
+};
+
+Easel.prototype.updateCell = function(cell, data) {
+	var key = cell.col + '_' + cell.row;
+	if (data) {
+		if (this.datastore) {
+			this.replaceRecord(this.datastore.getTable('cells'), key, {
+				col: cell.col,
+				row: cell.row,
+				data: data
+			});
+		} else {
+			localStorage.setItem(key, data);
+		}
+	} else {
+		if (this.datastore) {
+			var record = this.datastore.getTable('cells').get(key);
+			if (record) {
+				record.deleteRecord();
+			}
+		} else {
+			localStorage.removeItem(key)
 		}
 	}
 };
@@ -403,18 +416,7 @@ Easel.prototype.flushDirty = function() {
 	var _this = this;
 	Canvas.flushAll(function(cell) {
 		var data = cell.toData();
-			if (data) {
-				var key = cell.col + '_' + cell.row;
-				if (_this.datastore) {
-					_this.replaceRecord(_this.datastore.getTable('cells'), key, {
-						col: cell.col,
-						row: cell.row,
-						data: data
-					});
-				} else {
-					localStorage.setItem(key, data);
-				}
-			}
+		_this.updateCell(cell, data);
 	});
 
 	this.flushMeta();
@@ -426,9 +428,7 @@ Easel.prototype.save = function() {
 			var canvas = this.active[i];
 			var key = canvas.col + '_' + canvas.row;
 			var data = canvas.release();
-			if (data) {
-				localStorage.setItem(key, data);
-			}
+			this.updateCell(canvas, data);
 		}
 		localStorage.setItem('x', this.x);
 		localStorage.setItem('y', this.y);
@@ -444,13 +444,7 @@ Easel.prototype.save = function() {
 	for (var i = 0; i < this.active.length; i++) {
 		var cell = this.active[i];
 		var data = cell.release();
-		if (data) {
-			this.replaceRecord(cellTable, cell.col + '_' + cell.row, {
-				col: cell.col,
-				row: cell.row,
-				data: data
-			});
-		}
+		this.updateCell(cell,data);
 	}
 
 	this.flushMeta();

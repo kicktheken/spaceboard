@@ -104,6 +104,9 @@ Canvas.prototype.load = function(data) {
 		context.fillStyle = this.color;
 		context.fillRect(0,0,this.width,this.height);
 	}
+	if (!data) {
+		return;
+	}
 	var segments = data.split('_');
 
 	context.lineWidth = THICKNESS;
