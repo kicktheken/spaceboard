@@ -159,12 +159,21 @@ Canvas.prototype.release = function() {
 	return this.data;
 };
 
-Canvas.prototype.toData = function() {
+Canvas.prototype.toData = function(floor) {
 	if (this.points.length > 0) {
-		var data = this.points[0].join(',');
-		for (var i = 1; i < this.points.length; i++) {
-			data += '_' + this.points[i].join(',');
+		if (floor) {
+			function floor(arg) { return arg.floor(); }
+			var data = this.points[0].map(floor).join(',');
+			for (var i = 1; i < this.points.length; i++) {
+				data += '_' + this.points[i].map(floor).join(',');
+			}
+		} else {
+			var data = this.points[0].join(',');
+			for (var i = 1; i < this.points.length; i++) {
+				data += '_' + this.points[i].join(',');
+			}
 		}
+		
 		return data;
 	}
 };
@@ -253,6 +262,12 @@ Canvas.prototype.clearCircle = function(x, y, radius) {
 	for (var i = this.points.length - 1; i >= 0; i--) {
 		var segment = this.points[i];
 		if (segment.length == 2) {
+			var dx = segment[0] - x;
+			var dy = segment[1] - y;
+			// circle to dot intersection
+			if (dx * dx + dy * dy <= radius * radius) {
+				this.points.splice(i,1);
+			}
 		} else {
 			for (var j = segment.length - 4; j >= 0; j-=2) {
 				var x1 = segment[j];
@@ -265,12 +280,22 @@ Canvas.prototype.clearCircle = function(x, y, radius) {
 				var cx = x - x1;
 				var cy = y - y1;
 				var cross = dx*cy - dy*cx;
+				
 				if (cross * cross <= radius * radius * (dx*dx + dy*dy)) {
 					// start point intersects circle
-					if (cx * cx + cy * cy < radius * radius) {
-						segment.splice(j,4);
+					if (cx * cx + cy * cy <= radius * radius) {
+						segment.splice(j,2);
+						if (j < segment.length) {
+							var newsegment = segment.splice(j, segment.length - j);
+							if (newsegment.length > 2) { // don't include dots
+								this.points.splice(i+1,0,newsegment);
+							}
+						}
 						j-=2;
-					} else {
+					} else if ( // end point or middle intersects circle
+						(dx-cx)*(dx-cx) + (dy-cy)*(dy-cy) <= radius*radius ||
+						dx*cx + dy*cy >= 0 && dx*cx + dy*cy <= dx*dx + dy*dy
+					) {
 						segment.splice(j+2,2);
 					}
 					isErased = true;

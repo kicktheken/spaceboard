@@ -165,39 +165,47 @@ Easel.prototype.drawDot = function(x,y) {
 	this._drawDot(coords);
 };
 
-Easel.prototype._drawLine = function(coords1, coords2, offsetCol, offsetRow) {
+Easel.prototype._drawLine = function(coords1, coords2, offsetCol, offsetRow, exclude, reverse) {
 	offsetCol = offsetCol || 0;
 	offsetRow = offsetRow || 0;
-	this.initCell(
-		coords1.col + offsetCol, coords1.row + offsetRow
-	).drawLine(
-		COLOR,
-		coords1.x - (offsetCol * this.stage.width),
-		coords1.y - (offsetRow * this.stage.height),
-		coords2.x - ((offsetCol + coords1.col - coords2.col) * this.stage.width),
-		coords2.y - ((offsetRow  + coords1.row - coords2.row) * this.stage.height),
-		THICKNESS
-	);
+	exclude = exclude || {};
+
+	var col = coords1.col + offsetCol;
+	var row = coords1.row + offsetRow;
+	var key = col + '_' + row;
+	if (exclude[key]) {
+		return;
+	} else {
+		exclude[key] = true;
+	}
+	var cell = this.initCell(col, row);
+	var x1 = coords1.x - (offsetCol * this.stage.width);
+	var y1 = coords1.y - (offsetRow * this.stage.height);
+	var x2 = coords2.x - ((offsetCol + coords1.col - coords2.col) * this.stage.width);
+	var y2 = coords2.y - ((offsetRow  + coords1.row - coords2.row) * this.stage.height);
+	if (reverse) {
+		cell.drawLine(COLOR, x2, y2, x1, y1, THICKNESS);
+	} else {
+		cell.drawLine(COLOR, x1, y1, x2, y2, THICKNESS);
+	}
 };
 
 Easel.prototype.drawLine = function(x1, y1, x2, y2) {
 	var coords1 = this.translateCoords(x1,y1);
 	var coords2 = this.translateCoords(x2,y2);
 
-	// this method may have multiple draw calls for the same area
-	// but it should be performant enough that that doesn't matter
+	var exclude = {};
 	var neighbors = this.getZoneNeighbors(coords1, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
-		this._drawLine(coords1, coords2, neighbors[i][0], neighbors[i][1]);
+		this._drawLine(coords1, coords2, neighbors[i][0], neighbors[i][1], exclude);
 	}
-	this._drawLine(coords1, coords2);
-
+	this._drawLine(coords1, coords2, 0, 0, exclude);
 
 	neighbors = this.getZoneNeighbors(coords2, THICKNESS / 2);
 	for (var i=0; i < neighbors.length; i++) {
-		this._drawLine(coords2, coords1, neighbors[i][0], neighbors[i][1]);
+		this._drawLine(coords2, coords1, neighbors[i][0], neighbors[i][1], exclude, true);
 	}
-	this._drawLine(coords2, coords1);
+	this._drawLine(coords2, coords1, 0, 0, exclude, true);
 
 	var colDiff = coords2.col - coords1.col;
 	var rowDiff = coords2.row - coords1.row;
