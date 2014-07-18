@@ -3,6 +3,7 @@ define(['canvas'],function() {
 var maxZoom = 1;
 var minZoom = .2;
 var bPooling = true;
+var quadSize = { width: 800, height: 800 };
 
 function Easel(width, height, client) {
 	this.stage = new Canvas(width, height, true);
@@ -46,7 +47,7 @@ Easel.prototype.initCell = function(col, row, data) {
 		if (!data) {
 			data = this.getData(col,row);
 		}
-		cell = new Canvas(this.stage.width, this.stage.height, data, col, row);
+		cell = new Canvas(quadSize.width, quadSize.height, data, col, row);
 		this.grid[row][col] = cell;
 		this.active.push(cell);
 	}
@@ -78,8 +79,8 @@ Easel.prototype.getData = function(col, row) {
 };
 
 Easel.prototype.updateBounds = function(x,y) {
-	var offsetX = (1 / minZoom / 2) * this.stage.width;
-	var offsetY = (1 / minZoom / 2) * this.stage.height;
+	var offsetX = (1 / minZoom / 2) * quadSize.width;
+	var offsetY = (1 / minZoom / 2) * quadSize.height;
 
 	if (x < this.bounds.minx + offsetX) {
 		this.bounds.minx = x - offsetX;
@@ -97,12 +98,12 @@ Easel.prototype.translateCoords = function(x,y) {
 	x = (x - this.x / Canvas.getScale()) / this.scale;
 	y = (y - this.y / Canvas.getScale()) / this.scale;
 
-	var col = Math.floor(x / this.stage.width);
-	var row = Math.floor(y / this.stage.height);
+	var col = Math.floor(x / quadSize.width);
+	var row = Math.floor(y / quadSize.height);
 
 	this.updateBounds(x,y);
-	x -= col * this.stage.width;
-	y -= row * this.stage.height;
+	x -= col * quadSize.width;
+	y -= row * quadSize.height;
 
 	return { x:x, y:y, col:col, row:row };
 };
@@ -110,8 +111,8 @@ Easel.prototype.translateCoords = function(x,y) {
 Easel.prototype.getZoneNeighbors = function(coords, threshold) {
 	var ret = [];
 
-	var zoneWidth = this.stage.width * this.scale;
-	var zoneHeight = this.stage.height * this.scale;
+	var zoneWidth = quadSize.width * this.scale;
+	var zoneHeight = quadSize.height * this.scale;
 
 	if (coords.x < threshold) {
 		if (coords.y < threshold) {
@@ -147,8 +148,8 @@ Easel.prototype._drawDot = function(coords, offsetCol, offsetRow) {
 		coords.col + offsetCol, coords.row + offsetRow
 	).drawCircle(
 		COLOR,
-		coords.x - (offsetCol * this.stage.width),
-		coords.y - (offsetRow * this.stage.height),
+		coords.x - (offsetCol * quadSize.width),
+		coords.y - (offsetRow * quadSize.height),
 		THICKNESS / 2
 	);
 	return this;
@@ -179,10 +180,10 @@ Easel.prototype._drawLine = function(coords1, coords2, offsetCol, offsetRow, exc
 		exclude[key] = true;
 	}
 	var cell = this.initCell(col, row);
-	var x1 = coords1.x - (offsetCol * this.stage.width);
-	var y1 = coords1.y - (offsetRow * this.stage.height);
-	var x2 = coords2.x - ((offsetCol + coords1.col - coords2.col) * this.stage.width);
-	var y2 = coords2.y - ((offsetRow  + coords1.row - coords2.row) * this.stage.height);
+	var x1 = coords1.x - (offsetCol * quadSize.width);
+	var y1 = coords1.y - (offsetRow * quadSize.height);
+	var x2 = coords2.x - ((offsetCol + coords1.col - coords2.col) * quadSize.width);
+	var y2 = coords2.y - ((offsetRow  + coords1.row - coords2.row) * quadSize.height);
 	if (reverse) {
 		cell.drawLine(COLOR, x2, y2, x1, y1, THICKNESS);
 	} else {
@@ -216,16 +217,20 @@ Easel.prototype.drawLine = function(x1, y1, x2, y2) {
 };
 
 Easel.prototype.getViewport = function() {
-	var zoneWidth = this.stage.width * this.scale;
-	var zoneHeight = this.stage.height * this.scale;
+	var zoneWidth = quadSize.width * this.scale;
+	var zoneHeight = quadSize.height * this.scale;
 
-	var mincol = Math.floor(-this.x / zoneWidth / Canvas.getScale());
+	var xoffset = -this.x //- this.stage.width + quadSize.width;
+	var mincol = Math.floor(xoffset / zoneWidth / Canvas.getScale());
 	var numcols = Math.ceil(this.stage.width / zoneWidth) + 1;
 
+	var yoffset = -this.y //- this.stage.height + quadSize.height;
 	var minrow = Math.floor(-this.y / zoneHeight / Canvas.getScale());
 	var numrows = Math.ceil(this.stage.height / zoneHeight) + 1;
 
-	return { mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
+	var ret = { mincol: mincol, minrow: minrow, cols: numcols, rows: numrows };
+	console.log(ret);
+	return ret;
 };
 
 Easel.prototype.translate = function(dx, dy) {
@@ -238,15 +243,15 @@ Easel.prototype.translate = function(dx, dy) {
 
 	var scale = this.scale * Canvas.getScale();
 	var sscale = (1 - this.scale / 2) * Canvas.getScale();
-	if (-this.x < (this.bounds.minx + this.stage.width / 2) * scale ) {
-		this.x = -(this.bounds.minx + this.stage.width / 2) * scale;
-	} else if (-this.x > this.bounds.maxx * scale - this.stage.width * sscale) {
-		this.x = -(this.bounds.maxx * scale - this.stage.width * sscale);
+	if (-this.x < (this.bounds.minx + quadSize.width / 2) * scale ) {
+		this.x = -(this.bounds.minx + quadSize.width / 2) * scale;
+	} else if (-this.x > this.bounds.maxx * scale - quadSize.width * sscale) {
+		this.x = -(this.bounds.maxx * scale - quadSize.width * sscale);
 	}
-	if (-this.y < (this.bounds.miny + this.stage.height / 2) * scale) {
-		this.y = -(this.bounds.miny + this.stage.height / 2) * scale;
-	} else if (-this.y > this.bounds.maxy * scale - this.stage.height * sscale) {
-		this.y = -(this.bounds.maxy * scale - this.stage.height * sscale);
+	if (-this.y < (this.bounds.miny + quadSize.height / 2) * scale) {
+		this.y = -(this.bounds.miny + quadSize.height / 2) * scale;
+	} else if (-this.y > this.bounds.maxy * scale - quadSize.height * sscale) {
+		this.y = -(this.bounds.maxy * scale - quadSize.height * sscale);
 	}
 
 	var v = this.getViewport();
@@ -315,8 +320,8 @@ Easel.prototype._erase = function(coords, radius, offsetCol, offsetRow) {
 	this.initCell(
 		coords.col + offsetCol, coords.row + offsetRow
 	).clearCircle(
-		coords.x - (offsetCol * this.stage.width),
-		coords.y - (offsetRow * this.stage.height),
+		coords.x - (offsetCol * quadSize.width),
+		coords.y - (offsetRow * quadSize.height),
 		radius
 	);
 };
@@ -345,17 +350,19 @@ Easel.prototype.update = function() {
 		this.erase(this.eraser.x, this.eraser.y, this.eraser.radius);
 	}
 
-	var zoneWidth = this.stage.width * this.scale * Canvas.getScale();
-	var zoneHeight = this.stage.height * this.scale * Canvas.getScale();;
+	var zoneWidth = quadSize.width * this.scale * Canvas.getScale();
+	var zoneHeight = quadSize.height * this.scale * Canvas.getScale();;
 	var v = this.getViewport();
 	
+	var x = this.x + (this.stage.width - quadSize.width) * this.scale;
+	var y = this.y + (this.stage.height - quadSize.height) * this.scale;
 	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
 		for (var col = v.mincol; col < v.mincol + v.cols; col++) {
 			var cell = this.initCell(col,row);
 			this.stage.drawCanvas(
 				cell,
-				this.x + col * zoneWidth,
-				this.y + row * zoneHeight,
+				x + col * zoneWidth,
+				y + row * zoneHeight,
 				zoneWidth,
 				zoneHeight
 			);
@@ -381,10 +388,10 @@ Easel.prototype.update = function() {
 	context.font = fontsize + "px Arial";
 
 	for (var col = v.mincol; col < v.mincol + v.cols; col++) {
-		context.fillText(col, this.x + (col + .5) * zoneWidth + fontsize / 5, fontsize);
+		context.fillText(col, x + (col + .5) * zoneWidth + fontsize / 5, fontsize);
 	}
 	for (var row = v.minrow; row < v.minrow + v.rows; row++) {
-		context.fillText(-row, fontsize / 5, this.y + (row + .5) * zoneHeight - fontsize / 5);
+		context.fillText(-row, fontsize / 5, y + (row + .5) * zoneHeight - fontsize / 5);
 	}
 
 	//
@@ -536,7 +543,7 @@ Easel.prototype.load = function(done) {
 		return;
 	}
 	var _this = this;
-	this.datastoreManager.openOrCreateDatastore('_dd3',function (error, datastore) {
+	this.datastoreManager.openOrCreateDatastore('_dd5',function (error, datastore) {
 		if (error) {
 			throw new Error('Error opening default datastore: ' + error);
 		}
