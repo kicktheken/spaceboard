@@ -11,11 +11,10 @@ Number.prototype.floor = function() {
 	return Math.floor(this);
 };
 
-COLOR = 'yellow';
+COLOR = 'rgb(0,80,150)';
 THICKNESS = 6;
 var pool = [];
 var retina = false;
-var debug = true;
 var resolutionScale = 1;
 var dirty = {};
 
@@ -27,9 +26,8 @@ function Canvas(width, height, data, col, row) {
 	this.scale = 1;
 	this.points = [];
 
-	var canvas;
 	if (data == true) {
-		canvas = document.getElementById('canvas');
+		var canvas = document.getElementById('canvas');
 		canvas.retinaResolutionEnabled = retina;
 		canvas.width = width;
 		canvas.height = height;
@@ -37,15 +35,10 @@ function Canvas(width, height, data, col, row) {
 		this.canvas = canvas;
 	} else if (data) {
 		this.data = data;
-		canvas = this.init();
+		this.init();
 	} else {
-		canvas = this.initCanvas();
-		if (debug) {
-			var context = canvas.getContext('2d');
-			this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
-			context.fillStyle = this.color;
-			context.fillRect(0,0,width,height);
-		}
+		this.initCanvas();
+		this.clear();
 	}
 	
 	
@@ -67,12 +60,7 @@ Canvas.flushAll = function(callback) {
 Canvas.prototype.init = function() {
 	if (!this.canvas) {
 		var canvas = this.canvas = this.initCanvas();
-		if (debug) {
-			var context = canvas.getContext('2d');
-			this.color = "rgb("+[(50).rInt(50),(50).rInt(50),(50).rInt(50)].join(',')+")";
-			context.fillStyle = this.color;
-			context.fillRect(0,0,this.width,this.height);
-		}
+		this.clear();
 		if (this.data) {
 			this.load(this.data);
 			this.data = null;
@@ -103,10 +91,7 @@ Canvas.prototype.load = function(data) {
 		data = this.toData();
 	}
 	var context = this.canvas.getContext('2d');
-	if (debug) {
-		context.fillStyle = this.color;
-		context.fillRect(0,0,this.width,this.height);
-	}
+	this.clear();
 	if (!data) {
 		return;
 	}
@@ -246,13 +231,11 @@ Canvas.prototype.drawCanvas = function(canvas, x, y, width, height) {
 	return this;
 };
 
-Canvas.prototype.clear = function(color) {
+Canvas.prototype.clear = function() {
 	this.canvas.width = this.canvas.width;
-	if (typeof color === 'string' || debug) {
-		var context = this.canvas.getContext('2d');
-		context.fillStyle = color || this.color;
-		context.fillRect(0,0,this.width,this.height);
-	}
+	var context = this.canvas.getContext('2d');
+	context.fillStyle = 'rgb(245,240,225)';
+	context.fillRect(0,0,this.width,this.height);
 	return this;
 };
 
