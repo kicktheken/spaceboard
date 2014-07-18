@@ -99,8 +99,10 @@ Easel.prototype.updateBounds = function(x,y) {
 };
 
 Easel.prototype.translateCoords = function(x,y) {
-	x = (x - this.x / Canvas.getScale()) / this.scale;
-	y = (y - this.y / Canvas.getScale()) / this.scale;
+	var ox = this.x + (this.stage.width - quadSize.width) * this.scale;
+	var oy = this.y + (this.stage.height - quadSize.height) * this.scale;
+	x = (x - ox / Canvas.getScale()) / this.scale;
+	y = (y - oy / Canvas.getScale()) / this.scale;
 
 	var col = Math.floor(x / quadSize.width);
 	var row = Math.floor(y / quadSize.height);
