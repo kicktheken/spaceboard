@@ -17,7 +17,7 @@ Made for Dropbox Hack Week 2014.
 
 1. Generate minified javascript
 
-	$ npm install
-	$ grunt
+    $ npm install
+    $ grunt
 
 2. Compile from Xcode project `ios` folder
